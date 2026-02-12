@@ -83,6 +83,27 @@ def binarize_sentiment(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+def add_sentiment_lag1_polynomials(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Add non-linear terms from first sentiment lag:
+    - Sentiment_Lag1_squared
+    - Sentiment_Lag1_cubic
+
+    Supports either `Sentiment_Lag1` or `Sent_Lag1` as source.
+    """
+    base = None
+    if 'Sentiment_Lag1' in df.columns:
+        base = pd.to_numeric(df['Sentiment_Lag1'], errors='coerce')
+    elif 'Sent_Lag1' in df.columns:
+        base = pd.to_numeric(df['Sent_Lag1'], errors='coerce')
+
+    if base is not None:
+        df['Sentiment_Lag1_squared'] = base ** 2
+        df['Sentiment_Lag1_cubic'] = base ** 3
+
+    return df
+
+
 # =============================================================================
 # MAIN CLASSIFIER CLASS
 # =============================================================================
@@ -132,6 +153,9 @@ class MultinomialLogitLasso:
 
         # ── Add binary sentiment (Appendix B) ─────────────────────────
         df = binarize_sentiment(df)
+
+        # Add non-linear sentiment terms requested
+        df = add_sentiment_lag1_polynomials(df)
 
         # ── Build direction labels ─────────────────────────────────────
         df['Direction'] = make_direction_labels(df['Return'], self.threshold)

@@ -1,0 +1,21 @@
+ticker,sector,validation_accuracy,n_obs,group
+ATO,Utilities,0.45454545454545453,44,top10
+AAPL,Technology,0.45454545454545453,44,top10
+APTV,Consumer Cyclical,0.4772727272727273,44,top10
+AXON,Industrials,0.4772727272727273,44,top10
+ABT,Healthcare,0.4772727272727273,44,top10
+ALB,Basic Materials,0.4772727272727273,44,top10
+APD,Basic Materials,0.5,44,top10
+ADP,Technology,0.5,44,top10
+AEE,Utilities,0.5,44,top10
+ADSK,Technology,0.5,44,top10
+APO,Financial Services,0.18181818181818182,44,bottom10
+A,Healthcare,0.22727272727272727,44,bottom10
+AWK,Utilities,0.22727272727272727,44,bottom10
+AVB,Real Estate,0.22727272727272727,44,bottom10
+AZO,Consumer Cyclical,0.25,44,bottom10
+ACGL,Financial Services,0.2727272727272727,44,bottom10
+AME,Industrials,0.2727272727272727,44,bottom10
+AMD,Technology,0.29545454545454547,44,bottom10
+AXP,Financial Services,0.29545454545454547,44,bottom10
+ADM,Consumer Defensive,0.3181818181818182,44,bottom10
