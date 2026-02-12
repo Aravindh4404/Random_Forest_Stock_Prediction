@@ -1,0 +1,18 @@
+timestamp,ticker,error
+20260211_224709,CCI,Input X contains infinity or a value too large for dtype('float64').
+20260211_224709,CNC,Input X contains infinity or a value too large for dtype('float64').
+20260211_224709,SMCI,cannot reindex on an axis with duplicate labels
+20260211_224709,SW,Input X contains infinity or a value too large for dtype('float64').
+20260211_224709,TRMB,cannot reindex on an axis with duplicate labels
+20260211_233238,CCI,Input X contains infinity or a value too large for dtype('float64').
+20260211_233238,CNC,Input X contains infinity or a value too large for dtype('float64').
+20260211_233238,SMCI,cannot reindex on an axis with duplicate labels
+20260211_233238,SW,Input X contains infinity or a value too large for dtype('float64').
+20260211_233238,TRMB,cannot reindex on an axis with duplicate labels
+20260211_235234,ADSK,cannot reindex on an axis with duplicate labels
+20260211_235234,CCI,Input X contains infinity or a value too large for dtype('float64').
+20260211_235234,CNC,Input X contains infinity or a value too large for dtype('float64').
+20260211_235234,KR,cannot reindex on an axis with duplicate labels
+20260211_235234,SMCI,cannot reindex on an axis with duplicate labels
+20260211_235234,SW,Input X contains infinity or a value too large for dtype('float64').
+20260211_235234,TRMB,cannot reindex on an axis with duplicate labels
