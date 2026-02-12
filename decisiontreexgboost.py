@@ -1,6 +1,7 @@
 """
 S&P 500 Batch XGBoost + Decision Tree Stock Return Prediction
 - Uses ACTUAL quarterly filing/release dates from Quarterly_Release_Dates/*.xlsx
+- Uses ACTUAL macroeconomic release dates for GDP, IPI, and Unemployment
 - Financial data only becomes available in features ON or AFTER its release date
 - Blended ensemble: XGBoost (70%) + Decision Tree (30%)
 - Target: next-day return
@@ -21,33 +22,18 @@ warnings.filterwarnings('ignore')
 # ── Global config ────────────────────────────────────────────────────────────
 XGB_BLEND_WEIGHT        = 0.7    # 0.0 = pure DT, 1.0 = pure XGB
 QUARTERLY_DATES_DIR     = 'Quarterly_Release_Dates'
+MACRO_RELEASE_DIR       = 'Macroeconomic_Data'
 # ─────────────────────────────────────────────────────────────────────────────
 
 
 # =============================================================================
-# STEP 1 — Build a master release-date lookup  {ticker: {quarter_end: release_date}}
+# STEP 1 — Build release-date lookups
 # =============================================================================
 
 def load_release_date_lookup(directory=QUARTERLY_DATES_DIR):
     """
     Reads all sp500_quarterly_dates_batch_*.xlsx files and returns a dict:
-
         lookup[ticker] = pd.Series(index=quarter_end_dates, data=release_dates)
-
-    Column layout (from the screenshot):
-        C0  = Ticker
-        C1  = Company  (ignored)
-        C2  = CIK      (ignored)
-        C3+ = alternating quarter label / release date columns
-               e.g. "2024 Q1" header row, actual date in data rows
-
-    The xlsx files use a two-row header:
-        row 0 (header): Ticker | Company | CIK | 2024 Q1 | 2024 Q2 | ...
-    Each data cell in Q-columns contains the actual filing/release date
-    (already a real calendar date, not the quarter-end).
-
-    We treat the COLUMN HEADER as the quarter label and the CELL VALUE
-    as the release date for that ticker+quarter combination.
     """
     path = Path(directory)
     all_files = sorted(path.glob('sp500_quarterly_dates_batch_*.xlsx'))
@@ -60,11 +46,8 @@ def load_release_date_lookup(directory=QUARTERLY_DATES_DIR):
 
     frames = []
     for fpath in all_files:
-        df = pd.read_excel(fpath, header=0)   # row 0 is the header
-        # Normalise column names from the screenshot layout
+        df = pd.read_excel(fpath, header=0)
         df.columns = [str(c).strip() for c in df.columns]
-
-        # Rename the first three columns robustly
         cols = list(df.columns)
         rename = {cols[0]: 'Ticker', cols[1]: 'Company', cols[2]: 'CIK'}
         df.rename(columns=rename, inplace=True)
@@ -72,36 +55,25 @@ def load_release_date_lookup(directory=QUARTERLY_DATES_DIR):
         frames.append(df)
 
     master = pd.concat(frames, ignore_index=True)
-
-    # Quarter columns are everything after 'CIK'
     quarter_cols = [c for c in master.columns if c not in ('Ticker', 'Company', 'CIK')]
 
-    # Build lookup: ticker → {quarter_end_date → release_date}
-    #
-    # The column header looks like "2024 Q1", "2024 Q2", etc.
-    # We convert that label to the last calendar day of that quarter
-    # (the period the financial statement COVERS), then map it to the
-    # actual filing date stored in the cell.
     lookup = {}
-
     for _, row in master.iterrows():
         ticker = row['Ticker']
         if pd.isna(ticker) or ticker == 'nan':
             continue
 
-        ticker_map = {}   # quarter_end  →  release_date
+        ticker_map = {}
         for qcol in quarter_cols:
             release_val = row[qcol]
             if pd.isna(release_val):
                 continue
 
-            # Parse release date
             try:
                 release_date = pd.to_datetime(release_val)
             except Exception:
                 continue
 
-            # Convert column label ("2024 Q1") → quarter-end date
             try:
                 qend = _quarter_label_to_end_date(str(qcol))
             except Exception:
@@ -117,6 +89,58 @@ def load_release_date_lookup(directory=QUARTERLY_DATES_DIR):
     return lookup
 
 
+def load_macro_release_dates(macro_dir=MACRO_RELEASE_DIR):
+    """
+    Load macroeconomic release date calendars:
+
+    Returns:
+        dict with keys:
+        - 'gdp': DataFrame with columns [observation_date, release_date, Quarter]
+        - 'ipi': DataFrame with columns [observation_date, release_date, Quarter]
+        - 'unemployment': DataFrame with columns [observation_date, release_date]
+    """
+    macro_releases = {}
+
+    # Load GDP and IPI release dates
+    try:
+        gdp_ipi_path = Path(macro_dir) / 'Calendar GDP AND IPI.csv'
+        gdp_ipi = pd.read_csv(gdp_ipi_path)
+        gdp_ipi.columns = [c.strip() for c in gdp_ipi.columns]
+
+        # Convert Quarter to observation_date (quarter end)
+        gdp_ipi['observation_date'] = gdp_ipi['Quarter'].apply(_quarter_label_to_end_date)
+        gdp_ipi['release_date'] = pd.to_datetime(gdp_ipi['Release date'])
+
+        # Separate GDP and IPI (same release dates for both)
+        macro_releases['gdp'] = gdp_ipi[['observation_date', 'release_date', 'Quarter']].copy()
+        macro_releases['ipi'] = gdp_ipi[['observation_date', 'release_date', 'Quarter']].copy()
+
+        print(f"GDP/IPI release calendar loaded: {len(gdp_ipi)} quarters")
+    except Exception as e:
+        print(f"Warning: Could not load GDP/IPI release dates: {e}")
+        macro_releases['gdp'] = pd.DataFrame()
+        macro_releases['ipi'] = pd.DataFrame()
+
+    # Load Unemployment release dates
+    try:
+        unemp_path = Path(macro_dir) / 'CALENDAR UNEMPLOYMENT RATE.csv'
+        unemp = pd.read_csv(unemp_path)
+        unemp.columns = [c.strip() for c in unemp.columns]
+
+        # Parse the observation date and release date
+        unemp['observation_date'] = pd.to_datetime(unemp[unemp.columns[0]], format='%b-%y', errors='coerce')
+        unemp['release_date'] = pd.to_datetime(unemp['2024 Release Date'])
+
+        macro_releases['unemployment'] = unemp[['observation_date', 'release_date']].dropna()
+
+        print(f"Unemployment release calendar loaded: {len(macro_releases['unemployment'])} months")
+    except Exception as e:
+        print(f"Warning: Could not load unemployment release dates: {e}")
+        macro_releases['unemployment'] = pd.DataFrame()
+
+    return macro_releases
+
+
 def _quarter_label_to_end_date(label):
     """
     Convert a quarter label like '2024 Q1' → 2024-03-31,
@@ -124,7 +148,6 @@ def _quarter_label_to_end_date(label):
     Also handles 'Q1 2024' order and separators like '2024Q1'.
     """
     label = label.strip().upper().replace('_', ' ')
-    # Try patterns: "2024 Q1", "Q1 2024", "2024Q1"
     import re
     m = re.search(r'(\d{4})[^\d]*Q([1-4])', label)
     if not m:
@@ -145,9 +168,10 @@ def _quarter_label_to_end_date(label):
 # =============================================================================
 
 class StockReturnPredictor:
-    def __init__(self, ticker='NVDA', release_lookup=None):
+    def __init__(self, ticker='NVDA', release_lookup=None, macro_releases=None):
         self.ticker          = ticker
-        self.release_lookup  = release_lookup or {}   # global lookup passed in
+        self.release_lookup  = release_lookup or {}
+        self.macro_releases  = macro_releases or {}
         self.xgb_model       = None
         self.dt_model        = None
         self.scaler          = StandardScaler()
@@ -182,8 +206,7 @@ class StockReturnPredictor:
         except Exception:
             self.vix_data = pd.DataFrame()
 
-        # 4. Macro — each file loaded independently so one missing file
-        #    doesn't wipe out the others
+        # 4. Macro — load RAW data (release-date alignment done in engineer_features)
         def _load_macro(path, date_col, date_fmt=None):
             try:
                 d = pd.read_csv(path)
@@ -212,20 +235,12 @@ class StockReturnPredictor:
         self.cash_flow_q     = _try_load(f'financials_data/quarterly/{self.ticker}_cash_flow_quarterly.csv')
 
     # ──────────────────────────────────────────────────────────────────────────
-    # FINANCIALS ALIGNMENT  — core of the change
+    # FINANCIALS ALIGNMENT
     # ──────────────────────────────────────────────────────────────────────────
     def _align_financials_to_release_dates(self, fin_df, label):
         """
         Given a quarterly financials DataFrame, re-index it so that each
-        quarter's data only appears on its ACTUAL release date (from the
-        lookup), then forward-fill to create a clean daily series.
-
-        Handles two common CSV layouts:
-          - Wide:       rows = dates,    columns = metrics  (standard)
-          - Transposed: rows = metrics,  columns = dates    (yfinance style)
-
-        Returns a daily-frequency DataFrame with prefixed column names,
-        or an empty DataFrame if nothing can be aligned.
+        quarter's data only appears on its ACTUAL release date, then forward-fill.
         """
         if fin_df.empty:
             return pd.DataFrame()
@@ -236,10 +251,7 @@ class StockReturnPredictor:
 
         fin_df = fin_df.copy()
 
-        # ── Detect layout ─────────────────────────────────────────────────────
-        # In the transposed (yfinance) layout the first column contains metric
-        # names like "Tax Effect Of Unusual Items". We detect this by checking
-        # whether the first column's values look like dates or like strings.
+        # Detect layout (transposed vs standard)
         first_col = fin_df.columns[0]
         first_vals = fin_df[first_col].dropna().astype(str).head(5).tolist()
         looks_like_dates = sum(
@@ -248,10 +260,8 @@ class StockReturnPredictor:
         )
 
         if looks_like_dates < len(first_vals) // 2:
-            # Transposed layout: first col = metric names, remaining cols = dates
-            # Set metric names as index then transpose so rows become dates
+            # Transposed layout
             fin_df = fin_df.set_index(first_col)
-            # Column headers should be date strings — drop any that aren't parseable
             valid_cols = []
             for c in fin_df.columns:
                 try:
@@ -259,10 +269,10 @@ class StockReturnPredictor:
                     valid_cols.append(c)
                 except Exception:
                     pass
-            fin_df = fin_df[valid_cols].T          # now rows=dates, cols=metrics
+            fin_df = fin_df[valid_cols].T
             fin_df.index = pd.to_datetime(fin_df.index)
         else:
-            # Standard layout: first col (or named col) = date
+            # Standard layout
             date_col = first_col
             for cand in ['Date', 'date', 'Period', 'period', 'observation_date']:
                 if cand in fin_df.columns:
@@ -272,14 +282,11 @@ class StockReturnPredictor:
             fin_df = fin_df.set_index(date_col)
 
         fin_df = fin_df.sort_index()
-
-        # Convert all columns to numeric, coercing errors to NaN
         fin_df = fin_df.apply(pd.to_numeric, errors='coerce')
 
-        # Map each quarter-end → release date; drop unmatched quarters
+        # Map each quarter-end → release date
         release_rows = []
         for qend, row in fin_df.iterrows():
-            # Find the closest quarter-end in lookup (within 10 days tolerance)
             best_match = None
             best_diff  = pd.Timedelta(days=10)
             for lookup_qend in ticker_releases:
@@ -295,14 +302,66 @@ class StockReturnPredictor:
         if not release_rows:
             return pd.DataFrame()
 
-        # Build a new DataFrame indexed by release dates
         dates, rows = zip(*release_rows)
         aligned = pd.DataFrame(list(rows), index=pd.DatetimeIndex(dates))
         aligned = aligned.sort_index()
 
-        # Expand to daily via forward-fill (data stays constant until next release)
+        # Expand to daily via forward-fill
         daily = aligned.resample('D').ffill()
         daily.columns = [f'{label}_{c}' for c in daily.columns]
+        return daily
+
+    # ──────────────────────────────────────────────────────────────────────────
+    # MACROECONOMIC DATA ALIGNMENT
+    # ──────────────────────────────────────────────────────────────────────────
+    def _align_macro_to_release_dates(self, macro_df, release_calendar, label):
+        """
+        Align macroeconomic data to its actual release dates.
+
+        Args:
+            macro_df: DataFrame with observation_date as index and value columns
+            release_calendar: DataFrame with observation_date and release_date columns
+            label: Prefix for column names (e.g., 'GDP', 'IPI', 'UNEMP')
+
+        Returns:
+            Daily DataFrame with data appearing only on/after release dates
+        """
+        if macro_df.empty or release_calendar.empty:
+            return pd.DataFrame()
+
+        macro_df = macro_df.copy()
+
+        # Ensure observation_date is in the index
+        if 'observation_date' in macro_df.columns:
+            macro_df = macro_df.set_index('observation_date')
+
+        macro_df = macro_df.sort_index()
+
+        # Build release-aligned version
+        release_rows = []
+
+        for obs_date, row in macro_df.iterrows():
+            # Find matching release date (with tolerance for slight date mismatches)
+            matches = release_calendar[
+                abs(release_calendar['observation_date'] - obs_date) <= pd.Timedelta(days=5)
+            ]
+
+            if len(matches) > 0:
+                release_date = matches.iloc[0]['release_date']
+                release_rows.append((release_date, row))
+
+        if not release_rows:
+            return pd.DataFrame()
+
+        # Create aligned DataFrame indexed by release dates
+        dates, rows = zip(*release_rows)
+        aligned = pd.DataFrame(list(rows), index=pd.DatetimeIndex(dates))
+        aligned = aligned.sort_index()
+
+        # Expand to daily and forward-fill (data stays constant until next release)
+        daily = aligned.resample('D').ffill()
+        daily.columns = [f'{label}_{c}' for c in daily.columns]
+
         return daily
 
     # ──────────────────────────────────────────────────────────────────────────
@@ -352,11 +411,36 @@ class StockReturnPredictor:
             df['VIX_MA5']  = df['VIX'].rolling(5).mean()
             df['VIX_MA20'] = df['VIX'].rolling(20).mean()
 
-        # ── Macro ─────────────────────────────────────────────────────────────
-        for mdf in [self.gdp_data, self.ipi_data, self.unemp_data]:
-            if not mdf.empty:
-                tmp = mdf.set_index('observation_date').resample('D').ffill()
-                df  = df.join(tmp, how='left')
+        # ── Macro with RELEASE DATE ALIGNMENT ─────────────────────────────────
+        # GDP
+        if not self.gdp_data.empty and 'gdp' in self.macro_releases:
+            gdp_aligned = self._align_macro_to_release_dates(
+                self.gdp_data,
+                self.macro_releases['gdp'],
+                'GDP'
+            )
+            if not gdp_aligned.empty:
+                df = df.join(gdp_aligned, how='left')
+
+        # IPI
+        if not self.ipi_data.empty and 'ipi' in self.macro_releases:
+            ipi_aligned = self._align_macro_to_release_dates(
+                self.ipi_data,
+                self.macro_releases['ipi'],
+                'IPI'
+            )
+            if not ipi_aligned.empty:
+                df = df.join(ipi_aligned, how='left')
+
+        # Unemployment
+        if not self.unemp_data.empty and 'unemployment' in self.macro_releases:
+            unemp_aligned = self._align_macro_to_release_dates(
+                self.unemp_data,
+                self.macro_releases['unemployment'],
+                'UNEMP'
+            )
+            if not unemp_aligned.empty:
+                df = df.join(unemp_aligned, how='left')
 
         # ── Quarterly financials — release-date aligned ───────────────────────
         for fin_raw, label in [
@@ -494,9 +578,13 @@ def discover_tickers(stock_data_path='stock_data'):
     return sorted(f.stem for f in Path(stock_data_path).glob('*.csv'))
 
 
-def process_single_ticker(ticker, release_lookup, verbose=False):
+def process_single_ticker(ticker, release_lookup, macro_releases, verbose=False):
     try:
-        p = StockReturnPredictor(ticker=ticker, release_lookup=release_lookup)
+        p = StockReturnPredictor(
+            ticker=ticker,
+            release_lookup=release_lookup,
+            macro_releases=macro_releases
+        )
         p.load_data()
         p.engineer_features()
         p.prepare_train_test(test_size=0.2)
@@ -513,25 +601,28 @@ def process_single_ticker(ticker, release_lookup, verbose=False):
 
 def batch_process_sp500(max_tickers=None, verbose=True, save_models=False):
     print("=" * 80)
-    print("S&P 500  XGBoost + Decision Tree  —  Actual Filing Dates")
+    print("S&P 500  XGBoost + Decision Tree  —  Actual Filing & Macro Release Dates")
     print(f"XGB blend weight: {XGB_BLEND_WEIGHT:.0%}")
     print("=" * 80)
 
     # Load release dates ONCE for all tickers
-    print("\nLoading quarterly release dates...")
+    print("\nLoading quarterly financial release dates...")
     release_lookup = load_release_date_lookup()
+
+    print("\nLoading macroeconomic release dates...")
+    macro_releases = load_macro_release_dates()
 
     tickers = discover_tickers()
     if max_tickers:
         tickers = tickers[:max_tickers]
-    print(f"Tickers to process: {len(tickers)}\n")
+    print(f"\nTickers to process: {len(tickers)}\n")
 
     results, errors, predictors = [], [], {}
 
     for i, ticker in enumerate(tickers, 1):
         print(f"[{i:>4}/{len(tickers)}] {ticker:<6}", end='  ')
         m, predictor, err = process_single_ticker(
-            ticker, release_lookup, verbose=False)
+            ticker, release_lookup, macro_releases, verbose=False)
 
         if m:
             results.append(m)
@@ -586,7 +677,7 @@ def batch_process_sp500(max_tickers=None, verbose=True, save_models=False):
 
 def _visualise(df, ts):
     fig, axes = plt.subplots(2, 2, figsize=(16, 12))
-    fig.suptitle('S&P 500 — XGBoost + DT Ensemble (Actual Filing Dates)', fontsize=13)
+    fig.suptitle('S&P 500 — XGBoost + DT Ensemble (Actual Release Dates)', fontsize=13)
 
     def _hist(ax, col, xlabel, title, ref=None):
         ax.hist(df[col], bins=50, edgecolor='black', alpha=0.7)
@@ -628,7 +719,7 @@ def _visualise(df, ts):
 
 if __name__ == '__main__':
     results_df, errors_df = batch_process_sp500(
-        max_tickers=None,    # None = all 503; set e.g. 20 for a quick test
+        max_tickers=None,    # None = all tickers; set e.g. 20 for a quick test
         verbose=True,
         save_models=False,
     )
