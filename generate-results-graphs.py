@@ -9,7 +9,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 from matplotlib.colors import LinearSegmentedColormap
-import seaborn as sns
 from pathlib import Path
 import glob
 
@@ -200,32 +199,77 @@ def plot_top_bottom_r2(df, n=TOP_N):
 # PLOT 4 — Top / Bottom N tickers by Directional Accuracy
 # ══════════════════════════════════════════════════════════════════════════════
 
-def plot_top_bottom_diracc(df, n=TOP_N):
-    plt.style.use(STYLE)
-    fig, axes = plt.subplots(1, 2, figsize=FIGSIZE_LARGE)
+def plot_top_bottom_diracc(df, n=10):
+    plt.style.use('seaborn-v0_8-whitegrid')
+    fig, axes = plt.subplots(2, 1, figsize=(16, 12), sharex=True)
 
-    top = df.nlargest(n,  'test_dir_acc')[['ticker', 'test_dir_acc', 'xgb_dir_acc', 'dt_dir_acc']].reset_index(drop=True)
-    bot = df.nsmallest(n, 'test_dir_acc')[['ticker', 'test_dir_acc', 'xgb_dir_acc', 'dt_dir_acc']].reset_index(drop=True)
+    top = (
+        df.nlargest(n, 'test_dir_acc')[['ticker', 'test_dir_acc', 'xgb_dir_acc', 'dt_dir_acc']]
+        .sort_values('test_dir_acc', ascending=True)
+        .reset_index(drop=True)
+    )
+    bot = (
+        df.nsmallest(n, 'test_dir_acc')[['ticker', 'test_dir_acc', 'xgb_dir_acc', 'dt_dir_acc']]
+        .sort_values('test_dir_acc', ascending=True)
+        .reset_index(drop=True)
+    )
 
-    for ax, data, title in [
-        (axes[0], top, f'Top {n} — Directional Accuracy'),
-        (axes[1], bot, f'Bottom {n} — Directional Accuracy')
-    ]:
-        x = np.arange(len(data))
-        w = 0.28
-        ax.barh(x,       pct(data['test_dir_acc']), height=w, label='Blend',   color='#4FC3F7', edgecolor='white')
-        ax.barh(x + w,   pct(data['xgb_dir_acc']),  height=w, label='XGBoost', color='#81C784', edgecolor='white')
-        ax.barh(x + 2*w, pct(data['dt_dir_acc']),   height=w, label='DT',      color='#FFB74D', edgecolor='white')
-        ax.set_yticks(x + w)
-        ax.set_yticklabels(data['ticker'], fontsize=9)
-        ax.axvline(50, color='tomato', lw=1.5, ls='--', label='50% baseline')
-        ax.set_xlabel('Directional Accuracy (%)', fontsize=11)
-        ax.set_title(title, fontsize=13, fontweight='bold')
-        ax.invert_yaxis()
-        ax.legend(fontsize=9)
+    all_vals = pd.concat(
+        [
+            pct(top['test_dir_acc']), pct(top['xgb_dir_acc']), pct(top['dt_dir_acc']),
+            pct(bot['test_dir_acc']), pct(bot['xgb_dir_acc']), pct(bot['dt_dir_acc']),
+        ],
+        ignore_index=True,
+    )
+    xmin = max(0, np.floor(all_vals.min() - 2))
+    xmax = np.ceil(all_vals.max() + 3)
 
-    plt.suptitle('Directional Accuracy — Top vs Bottom Performers', fontsize=15, fontweight='bold', y=1.01)
-    plt.tight_layout()
+    def _draw_panel(ax, data, title):
+        y = np.arange(len(data))
+        h = 0.23
+
+        ax.axvspan(xmin, 50, color='#fdecea', alpha=0.45, zorder=0)
+        ax.axvspan(50, xmax, color='#eaf7ee', alpha=0.45, zorder=0)
+
+        bars_blend = ax.barh(
+            y + h, pct(data['test_dir_acc']), height=h, label='Blend',
+            color='#1f77b4', edgecolor='white', linewidth=0.8, zorder=3
+        )
+        bars_xgb = ax.barh(
+            y, pct(data['xgb_dir_acc']), height=h, label='XGBoost',
+            color='#2ca02c', edgecolor='white', linewidth=0.8, zorder=3
+        )
+        bars_dt = ax.barh(
+            y - h, pct(data['dt_dir_acc']), height=h, label='Decision Tree',
+            color='#ff7f0e', edgecolor='white', linewidth=0.8, zorder=3
+        )
+
+        ax.set_yticks(y)
+        ax.set_yticklabels(data['ticker'], fontsize=11, fontweight='bold')
+        ax.set_xlim(xmin, xmax)
+        ax.set_title(title, fontsize=14, fontweight='bold')
+        ax.set_ylabel('Ticker', fontsize=11)
+        ax.grid(axis='x', linestyle='--', alpha=0.35, zorder=1)
+        ax.axvline(50, color='#d62728', lw=1.8, ls='--', zorder=4)
+        ax.text(50.2, len(data) - 0.35, '50% baseline', color='#d62728', fontsize=10, va='top')
+
+        for bars in (bars_blend, bars_xgb, bars_dt):
+            for bar in bars:
+                v = bar.get_width()
+                ax.text(
+                    v + 0.2, bar.get_y() + bar.get_height() / 2, f'{v:.1f}%',
+                    va='center', ha='left', fontsize=9, color='#1f1f1f', zorder=5
+                )
+
+    _draw_panel(axes[0], top, f'Top {n} Tickers by Directional Accuracy')
+    _draw_panel(axes[1], bot, f'Bottom {n} Tickers by Directional Accuracy')
+
+    axes[1].set_xlabel('Directional Accuracy (%)', fontsize=12)
+    handles, labels = axes[0].get_legend_handles_labels()
+    fig.legend(handles, labels, ncol=3, loc='upper center', frameon=False, fontsize=11)
+    fig.suptitle('Directional Accuracy Comparison (Top 10 vs Bottom 10)', fontsize=17, fontweight='bold', y=0.98)
+    fig.tight_layout(rect=[0, 0, 1, 0.95])
+
     save(fig, '4_top_bottom_diracc')
     plt.show()
 
@@ -362,7 +406,7 @@ def plot_top_feature_frequency(df, n=20):
     def _cat_color(feat):
         if 'Return' in feat:    return '#4FC3F7'
         if 'Sentiment' in feat: return '#A5D6A7'
-        if 'VIX' in feat:       return '#FFB74D'
+        if 'VIX'    in feat:       return '#FFB74D'
         if any(r in feat for r in ['roe','roa','op_margin','debt','liquidity',
                                    'current_ratio','free_cf','revenue','ocf']):
             return '#F48FB1'
