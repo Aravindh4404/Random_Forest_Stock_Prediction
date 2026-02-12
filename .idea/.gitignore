@@ -9,3 +9,7 @@
 
 .idea
 
+/copilot.data.migration.agent.xml
+/misc.xml
+/modules.xml
+/vcs.xml
