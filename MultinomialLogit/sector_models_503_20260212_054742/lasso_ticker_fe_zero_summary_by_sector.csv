@@ -1,0 +1,12 @@
+sector_slug,n_ticker_dummies,n_zero_all_classes,n_active,zero_pct
+basic_materials,20,0,20,0.0
+communication_services,25,0,25,0.0
+consumer_cyclical,55,0,55,0.0
+consumer_defensive,37,0,37,0.0
+energy,22,0,22,0.0
+financial_services,69,0,69,0.0
+healthcare,60,0,60,0.0
+industrials,72,0,72,0.0
+real_estate,31,24,7,0.7741935483870968
+technology,81,0,81,0.0
+utilities,31,0,31,0.0

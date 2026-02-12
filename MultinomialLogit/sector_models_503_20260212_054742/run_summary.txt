@@ -1,0 +1,32 @@
+Sector-wise multinomial logit (LASSO)
+Run directory: c:\Users\jorge\OneDrive\Documentos\Data 606\Project\MultinomialLogit\sector_models_503_20260212_054742
+Tickers used: 503
+Sectors attempted: 11
+Sectors succeeded: 11
+Sectors failed: 0
+
+Top sectors by validation accuracy:
+                sector  n_tickers  val_accuracy  val_f1_macro
+            Technology         81      0.408530      0.386743
+             Utilities         31      0.404692      0.344644
+Communication Services         25      0.403636      0.368781
+       Basic Materials         20      0.386364      0.361860
+    Consumer Defensive         37      0.372236      0.370708
+           Industrials         72      0.368056      0.345196
+                Energy         22      0.366736      0.310034
+            Healthcare         60      0.357197      0.331817
+    Financial Services         69      0.355402      0.302157
+     Consumer Cyclical         55      0.350413      0.335089
+
+Bottom sectors by validation accuracy:
+                sector  n_tickers  val_accuracy  val_f1_macro
+             Utilities         31      0.404692      0.344644
+Communication Services         25      0.403636      0.368781
+       Basic Materials         20      0.386364      0.361860
+    Consumer Defensive         37      0.372236      0.370708
+           Industrials         72      0.368056      0.345196
+                Energy         22      0.366736      0.310034
+            Healthcare         60      0.357197      0.331817
+    Financial Services         69      0.355402      0.302157
+     Consumer Cyclical         55      0.350413      0.335089
+           Real Estate         31      0.346041      0.311417
