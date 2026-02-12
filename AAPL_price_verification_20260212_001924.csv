@@ -1,0 +1,5 @@
+ticker,date,close_price,quarter_end,release_date,financial_data_available,is_release_date
+AAPL,2025-10-28,268.7394714355469,2025-09-30,2025-10-31,False,False
+AAPL,2025-10-29,269.4388122558594,2025-09-30,2025-10-31,False,False
+AAPL,2025-10-30,271.1371459960937,2025-09-30,2025-10-31,False,False
+AAPL,2025-10-31,270.108154296875,2025-09-30,2025-10-31,True,True

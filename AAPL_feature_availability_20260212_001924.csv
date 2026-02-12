@@ -1,0 +1,4 @@
+ticker,quarter_end,release_date,days_lag,metric,value,available_from,note
+AAPL,2025-09-30,2025-10-31,31,Tax Effect Of Unusual Items,0.0,2025-10-31,Data NOT available before 2025-10-31
+AAPL,2025-09-30,2025-10-31,31,Tax Rate For Calcs,0.162724,2025-10-31,Data NOT available before 2025-10-31
+AAPL,2025-09-30,2025-10-31,31,Normalized EBITDA,35554000000.0,2025-10-31,Data NOT available before 2025-10-31

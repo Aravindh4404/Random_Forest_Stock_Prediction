@@ -1,0 +1,8 @@
+ticker,error
+ADSK,cannot reindex on an axis with duplicate labels
+CCI,Input X contains infinity or a value too large for dtype('float64').
+CNC,Input X contains infinity or a value too large for dtype('float64').
+KR,cannot reindex on an axis with duplicate labels
+SMCI,cannot reindex on an axis with duplicate labels
+SW,Input X contains infinity or a value too large for dtype('float64').
+TRMB,cannot reindex on an axis with duplicate labels
