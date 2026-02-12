@@ -1,0 +1,9 @@
+N_TICKERS_TEST=50
+Threshold selected: ?0.006226 (0.623%)
+Best C: 10.0
+
+                   split  accuracy  balanced_accuracy  f1_macro  f1_weighted  n_samples
+                   train  0.427282           0.422448  0.412972     0.416080      10300
+validation_out_of_sample  0.404091           0.382972  0.342255     0.356534       2200
+        testing_tscv_oof  0.375176           0.368945  0.362679     0.366590       8500
+  testing_tscv_fold_mean  0.375176           0.365909  0.332529     0.338507       8500

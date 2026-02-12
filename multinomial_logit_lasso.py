@@ -252,12 +252,13 @@ class MultinomialLogitLasso:
 
         # LogisticRegressionCV searches over Cs automatically
         self.model = LogisticRegressionCV(
-            Cs=np.logspace(-1, 4, 20),   # 20 C values from 0.1 to 10000
+            Cs=np.logspace(-1, 4, 10),   # Reduced to 10 C values for efficiency
             penalty='l1',
             solver='saga',
             cv=tscv,
             scoring='accuracy',
-            max_iter=10000,
+            max_iter=5000,               # Reduced max_iter (usually sufficient)
+            tol=1e-3,                    # Relaxed tolerance for faster convergence
             random_state=42,
             n_jobs=-1,
         )

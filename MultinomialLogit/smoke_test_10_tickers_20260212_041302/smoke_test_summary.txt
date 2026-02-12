@@ -1,0 +1,7 @@
+N_TICKERS_TEST=10
+Threshold selected: ?0.005647 (0.565%)
+Best C: 10.0
+
+     split  accuracy  balanced_accuracy  f1_macro  f1_weighted  n_samples
+     train  0.413592           0.412079  0.410088     0.410924       2060
+validation  0.350000           0.341381  0.325570     0.332037        440
