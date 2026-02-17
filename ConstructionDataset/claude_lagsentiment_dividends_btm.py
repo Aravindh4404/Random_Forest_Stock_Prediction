@@ -69,17 +69,17 @@ def _quarter_label_to_end_date(label):
 
 def load_all_release_dates(directory=RELEASE_DATES_DIR):
     """Load release dates for all tickers"""
-    print(f"\n→ Loading quarterly release dates...")
+    print("\nINFO: Loading quarterly release dates...")
 
     path = Path(directory)
     if not path.exists():
-        print(f"   ⚠ Release dates directory not found: {directory}")
+        print(f"WARNING: Release dates directory not found: {directory}")
         return {}
 
     all_files = sorted(path.glob('sp500_quarterly_dates_batch_*.xlsx'))
 
     if not all_files:
-        print(f"   ⚠ No release date files found")
+        print("WARNING: No release date files found")
         return {}
 
     all_tickers = {}
@@ -119,16 +119,16 @@ def load_all_release_dates(directory=RELEASE_DATES_DIR):
                         all_tickers[ticker] = ticker_map
 
         except Exception as e:
-            print(f"   ⚠ Error reading {fpath.name}: {e}")
+            print(f"WARNING: Error reading {fpath.name}: {e}")
             continue
 
-    print(f"   ✓ Loaded release dates for {len(all_tickers)} tickers")
+    print(f"OK: Loaded release dates for {len(all_tickers)} tickers")
     return all_tickers
 
 
 def load_macro_release_calendars(macro_dir=MACRO_DIR):
     """Load macroeconomic release date calendars - CORRECT VERSION"""
-    print(f"\n→ Loading macro release calendars...")
+    print("\nINFO: Loading macro release calendars...")
 
     calendars = {
         'gdp': pd.DataFrame(),
@@ -165,11 +165,11 @@ def load_macro_release_calendars(macro_dir=MACRO_DIR):
             calendars['gdp'] = df[['observation_date', 'release_date']].dropna().copy()
             calendars['ipi'] = calendars['gdp'].copy()
 
-            print(f"     ✓ Loaded {len(calendars['gdp'])} quarters")
+            print(f"OK: Loaded {len(calendars['gdp'])} GDP/IPI quarters")
         except Exception as e:
-            print(f"     ✗ Error: {e}")
+            print(f"ERROR: {e}")
     else:
-        print(f"     ⚠ File not found: {gdp_ipi_path}")
+        print(f"WARNING: File not found: {gdp_ipi_path}")
 
     # Unemployment Calendar
     print(f"   - Loading Unemployment calendar...")
@@ -203,11 +203,11 @@ def load_macro_release_calendars(macro_dir=MACRO_DIR):
 
             calendars['unemployment'] = df[['observation_date', 'release_date']].dropna()
 
-            print(f"     ✓ Loaded {len(calendars['unemployment'])} months")
+            print(f"OK: Loaded {len(calendars['unemployment'])} unemployment months")
         except Exception as e:
-            print(f"     ✗ Error: {e}")
+            print(f"ERROR: {e}")
     else:
-        print(f"     ⚠ File not found: {unemp_path}")
+        print(f"WARNING: File not found: {unemp_path}")
 
     return calendars
 
@@ -404,7 +404,7 @@ class FeatureGenerator:
             return f.sort_index()
 
         except Exception as e:
-            print(f"      ⚠ Financial ratio error: {e}")
+            print(f"WARNING: Financial ratio error: {e}")
             return pd.DataFrame()
 
     def align_to_release_dates(self, data_df, is_financial=True):
@@ -647,13 +647,13 @@ def batch_process_stocks():
     # Discover tickers
     if TEST_TICKER:
         tickers = [TEST_TICKER]
-        print(f"\n→ TEST MODE: Processing single ticker: {TEST_TICKER}\n")
+        print(f"\nINFO: TEST MODE enabled. Processing single ticker: {TEST_TICKER}\n")
     else:
         tickers = discover_tickers()
         if not tickers:
-            print("\n❌ No tickers found in stock_data directory")
+            print("\nERROR: No tickers found in stock_data directory")
             return
-        print(f"\n→ Found {len(tickers)} tickers to process\n")
+        print(f"\nINFO: Found {len(tickers)} tickers to process\n")
 
     # Create output directory
     Path(OUTPUT_DIR).mkdir(parents=True, exist_ok=True)
@@ -691,11 +691,11 @@ def batch_process_stocks():
                 'file': output_path.name
             })
 
-            print(f"✓  {num_features} features ({len(macro_cols)} macro, {len(vix_cols)} VIX, {len(sent_cols)} sentiment), {num_rows} rows")
+            print(f"OK: {num_features} features ({len(macro_cols)} macro, {len(vix_cols)} VIX, {len(sent_cols)} sentiment), {num_rows} rows")
 
         except Exception as e:
             errors.append({'ticker': ticker, 'error': str(e)})
-            print(f"✗  {str(e)[:60]}")
+            print(f"ERROR: {str(e)[:60]}")
 
     # Save summary
     print("\n" + "=" * 80)
@@ -706,8 +706,8 @@ def batch_process_stocks():
         results_df = pd.DataFrame(results)
         summary_path = Path(OUTPUT_DIR) / f'_processing_summary_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv'
         results_df.to_csv(summary_path, index=False)
-        print(f"\n✓ Summary saved to: {summary_path}")
-        print(f"\n✓ Feature datasets saved to: {OUTPUT_DIR}/")
+        print(f"\nOK: Summary saved to: {summary_path}")
+        print(f"\nOK: Feature datasets saved to: {OUTPUT_DIR}/")
 
         print(f"\nFeature Statistics:")
         print(f"  Mean total features: {results_df['features'].mean():.0f}")
@@ -720,7 +720,7 @@ def batch_process_stocks():
         errors_df = pd.DataFrame(errors)
         error_path = Path(OUTPUT_DIR) / f'_errors_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv'
         errors_df.to_csv(error_path, index=False)
-        print(f"\n⚠ Errors saved to: {error_path}")
+        print(f"\nWARNING: Errors saved to: {error_path}")
 
 
 if __name__ == '__main__':

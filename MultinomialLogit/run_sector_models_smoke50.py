@@ -27,7 +27,7 @@ warnings.filterwarnings("ignore")
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 PANEL_PATH = PROJECT_ROOT / "ConstructionDataset" / "all_companies_features.csv"
 SECTOR_PATH = PROJECT_ROOT / "stock_sectors.csv"
-OUT_BASE = PROJECT_ROOT / "MultinomialLogit"
+OUT_BASE = PROJECT_ROOT / "MultinomialLogit" / "runs" / "local"
 FEATURE_DIR_PRIMARY = PROJECT_ROOT / "ConstructionDataset" / "feature_datasets_enhanced"
 FEATURE_DIR_FALLBACK = PROJECT_ROOT / "feature_datasets"
 PANEL_CACHE_DIR = PROJECT_ROOT / "ConstructionDataset" / "cache"

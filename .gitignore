@@ -4,4 +4,8 @@ ConstructionDataset/smoke_tests/
 MultinomialLogit/__pycache__/
 __pycache__/
 MultinomialLogit/smoke_test_*/
+MultinomialLogit/runs/local/
+MultinomialLogit/.jupyter/
+MultinomialLogit/.ipynb_checkpoints/
+ConstructionDataset/__pycache__/
 *.Rhistory
