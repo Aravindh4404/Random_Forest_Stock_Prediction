@@ -1,0 +1,94 @@
+variable,category,description,transformation_formula,unit_scale,source,temporal_level,notes
+Date,time,Observation date,N/A,YYYY-MM-DD,stock_data,daily,
+ticker,identifier,Equity ticker symbol,N/A,text,file name / stock_data,daily,
+Dividends,market_price,Dividend per share observed on date t,raw value,currency/share,stock_data/*.csv,daily,"For strict t prediction, prefer Dividends_Lag* to avoid contemporaneous leakage."
+Dividends_Lag1,market_price,Dividend per share lagged by 1 trading days,Dividends_(t-1),currency/share,derived from Dividends,daily,
+Dividends_Lag2,market_price,Dividend per share lagged by 2 trading days,Dividends_(t-2),currency/share,derived from Dividends,daily,
+Dividends_Lag3,market_price,Dividend per share lagged by 3 trading days,Dividends_(t-3),currency/share,derived from Dividends,daily,
+Dividends_Lag5,market_price,Dividend per share lagged by 5 trading days,Dividends_(t-5),currency/share,derived from Dividends,daily,
+Dividends_Lag10,market_price,Dividend per share lagged by 10 trading days,Dividends_(t-10),currency/share,derived from Dividends,daily,
+Dividends_Lag20,market_price,Dividend per share lagged by 20 trading days,Dividends_(t-20),currency/share,derived from Dividends,daily,
+Return,market_price,Daily close-to-close return,Close_t / Close_(t-1) - 1,proportion,stock_data (Close),daily,"Use as target, not as a same-day predictor for t."
+Return_Lag1,market_price,Return lagged by 1 trading days,Return_(t-1),proportion,derived from Return,daily,
+Return_Lag2,market_price,Return lagged by 2 trading days,Return_(t-2),proportion,derived from Return,daily,
+Return_Lag3,market_price,Return lagged by 3 trading days,Return_(t-3),proportion,derived from Return,daily,
+Return_Lag5,market_price,Return lagged by 5 trading days,Return_(t-5),proportion,derived from Return,daily,
+Return_Lag10,market_price,Return lagged by 10 trading days,Return_(t-10),proportion,derived from Return,daily,
+Return_Lag20,market_price,Return lagged by 20 trading days,Return_(t-20),proportion,derived from Return,daily,
+SMA_5,technical,Simple moving average of Close over 5 days,MA_5(Close),price,derived from OHLCV,daily (shifted by 1 day),"Built from historical prices/volume and shifted with shift(1), so value at t uses information available at t-1."
+SMA_10,technical,Simple moving average of Close over 10 days,MA_10(Close),price,derived from OHLCV,daily (shifted by 1 day),"Built from historical prices/volume and shifted with shift(1), so value at t uses information available at t-1."
+SMA_20,technical,Simple moving average of Close over 20 days,MA_20(Close),price,derived from OHLCV,daily (shifted by 1 day),"Built from historical prices/volume and shifted with shift(1), so value at t uses information available at t-1."
+SMA_50,technical,Simple moving average of Close over 50 days,MA_50(Close),price,derived from OHLCV,daily (shifted by 1 day),"Built from historical prices/volume and shifted with shift(1), so value at t uses information available at t-1."
+SMA_200,technical,Simple moving average of Close over 200 days,MA_200(Close),price,derived from OHLCV,daily (shifted by 1 day),"Built from historical prices/volume and shifted with shift(1), so value at t uses information available at t-1."
+Volatility_5,technical,Rolling volatility over 5 days,STD_5(Return),proportion,derived from OHLCV,daily (shifted by 1 day),"Built from historical prices/volume and shifted with shift(1), so value at t uses information available at t-1."
+ATR_5,technical,Average True Range proxy over 5 days,MA_5(High - Low),price,derived from OHLCV,daily (shifted by 1 day),"ATR = Average True Range. In this pipeline it is a simplified ATR proxy: rolling mean of (High - Low), then shifted by 1 day."
+Volatility_10,technical,Rolling volatility over 10 days,STD_10(Return),proportion,derived from OHLCV,daily (shifted by 1 day),"Built from historical prices/volume and shifted with shift(1), so value at t uses information available at t-1."
+ATR_10,technical,Average True Range proxy over 10 days,MA_10(High - Low),price,derived from OHLCV,daily (shifted by 1 day),"ATR = Average True Range. In this pipeline it is a simplified ATR proxy: rolling mean of (High - Low), then shifted by 1 day."
+Volatility_20,technical,Rolling volatility over 20 days,STD_20(Return),proportion,derived from OHLCV,daily (shifted by 1 day),"Built from historical prices/volume and shifted with shift(1), so value at t uses information available at t-1."
+ATR_20,technical,Average True Range proxy over 20 days,MA_20(High - Low),price,derived from OHLCV,daily (shifted by 1 day),"ATR = Average True Range. In this pipeline it is a simplified ATR proxy: rolling mean of (High - Low), then shifted by 1 day."
+RSI_14,technical,Relative Strength Index (14-period),100 - 100 / (1 + RS),0-100,derived from OHLCV,daily (shifted by 1 day),"Built from historical prices/volume and shifted with shift(1), so value at t uses information available at t-1."
+MACD,technical,MACD line,EMA_12(Close) - EMA_26(Close),price level,derived from OHLCV,daily (shifted by 1 day),"Built from historical prices/volume and shifted with shift(1), so value at t uses information available at t-1."
+MACD_Signal,technical,MACD signal line,EMA_9(MACD),price level,derived from OHLCV,daily (shifted by 1 day),"Built from historical prices/volume and shifted with shift(1), so value at t uses information available at t-1."
+MACD_Diff,technical,MACD histogram,MACD - MACD_Signal,price level,derived from OHLCV,daily (shifted by 1 day),"Built from historical prices/volume and shifted with shift(1), so value at t uses information available at t-1."
+Volume_MA_20,technical,20-day moving average of volume,MA_20(Volume),shares,derived from OHLCV,daily (shifted by 1 day),"Built from historical prices/volume and shifted with shift(1), so value at t uses information available at t-1."
+Volume_Ratio,technical,Relative volume,Volume / Volume_MA_20,ratio,derived from OHLCV,daily (shifted by 1 day),"Built from historical prices/volume and shifted with shift(1), so value at t uses information available at t-1."
+BB_Middle,technical,Bollinger middle band,MA_20(Close),price,derived from OHLCV,daily (shifted by 1 day),"Built from historical prices/volume and shifted with shift(1), so value at t uses information available at t-1."
+BB_Upper,technical,Bollinger upper band,BB_Middle + 2*STD_20(Close),price,derived from OHLCV,daily (shifted by 1 day),"Built from historical prices/volume and shifted with shift(1), so value at t uses information available at t-1."
+BB_Lower,technical,Bollinger lower band,BB_Middle - 2*STD_20(Close),price,derived from OHLCV,daily (shifted by 1 day),"Built from historical prices/volume and shifted with shift(1), so value at t uses information available at t-1."
+BB_Width,technical,Relative Bollinger band width,(BB_Upper - BB_Lower) / BB_Middle,ratio,derived from OHLCV,daily (shifted by 1 day),"Built from historical prices/volume and shifted with shift(1), so value at t uses information available at t-1."
+Sentiment,sentiment,Daily sentiment index,raw value (ffill),index,Data_Sentiment_Index/csv_files,daily,Potentially contemporaneous at t; use Sentiment_Lag* for strict real-time prediction.
+Sentiment_Lag1,sentiment,Sentiment index lagged by 1 trading days,Sentiment_(t-1),index,Data_Sentiment_Index/csv_files,daily,
+Sentiment_Lag2,sentiment,Sentiment index lagged by 2 trading days,Sentiment_(t-2),index,Data_Sentiment_Index/csv_files,daily,
+Sentiment_Lag3,sentiment,Sentiment index lagged by 3 trading days,Sentiment_(t-3),index,Data_Sentiment_Index/csv_files,daily,
+Sentiment_Lag5,sentiment,Sentiment index lagged by 5 trading days,Sentiment_(t-5),index,Data_Sentiment_Index/csv_files,daily,
+Sentiment_Lag10,sentiment,Sentiment index lagged by 10 trading days,Sentiment_(t-10),index,Data_Sentiment_Index/csv_files,daily,
+Sentiment_Lag20,sentiment,Sentiment index lagged by 20 trading days,Sentiment_(t-20),index,Data_Sentiment_Index/csv_files,daily,
+VIX,market_risk,CBOE VIX index (daily),raw value (ffill),index,VIX/vix_data.csv,daily,Potentially contemporaneous at t; use VIX_Lag* for strict real-time prediction.
+VIX_Lag1,market_risk,VIX lagged by 1 trading days,VIX_(t-1),index,VIX/vix_data.csv,daily,
+VIX_Lag2,market_risk,VIX lagged by 2 trading days,VIX_(t-2),index,VIX/vix_data.csv,daily,
+VIX_Lag3,market_risk,VIX lagged by 3 trading days,VIX_(t-3),index,VIX/vix_data.csv,daily,
+VIX_Lag5,market_risk,VIX lagged by 5 trading days,VIX_(t-5),index,VIX/vix_data.csv,daily,
+VIX_Lag10,market_risk,VIX lagged by 10 trading days,VIX_(t-10),index,VIX/vix_data.csv,daily,
+VIX_Lag20,market_risk,VIX lagged by 20 trading days,VIX_(t-20),index,VIX/vix_data.csv,daily,
+net_income,fundamentals_base,Quarterly net income,raw value,currency/shares,financials_data/quarterly,"quarterly aligned to release date, then daily ffill",Aligned to filing/release date and forward-filled.
+total_revenue,fundamentals_base,Quarterly total revenue,raw value,currency/shares,financials_data/quarterly,"quarterly aligned to release date, then daily ffill",Aligned to filing/release date and forward-filled.
+operating_income,fundamentals_base,Quarterly operating income,raw value,currency/shares,financials_data/quarterly,"quarterly aligned to release date, then daily ffill",Aligned to filing/release date and forward-filled.
+total_assets,fundamentals_base,Quarterly total assets,raw value,currency/shares,financials_data/quarterly,"quarterly aligned to release date, then daily ffill",Aligned to filing/release date and forward-filled.
+total_equity,fundamentals_base,Quarterly stockholders equity,raw value,currency/shares,financials_data/quarterly,"quarterly aligned to release date, then daily ffill",Aligned to filing/release date and forward-filled.
+total_debt,fundamentals_base,Quarterly total debt,raw value,currency/shares,financials_data/quarterly,"quarterly aligned to release date, then daily ffill",Aligned to filing/release date and forward-filled.
+current_assets,fundamentals_base,Quarterly current assets,raw value,currency/shares,financials_data/quarterly,"quarterly aligned to release date, then daily ffill",Aligned to filing/release date and forward-filled.
+current_liabilities,fundamentals_base,Quarterly current liabilities,raw value,currency/shares,financials_data/quarterly,"quarterly aligned to release date, then daily ffill",Aligned to filing/release date and forward-filled.
+cash_equivalents,fundamentals_base,Quarterly cash and cash equivalents,raw value,currency/shares,financials_data/quarterly,"quarterly aligned to release date, then daily ffill",Aligned to filing/release date and forward-filled.
+shares_outstanding,fundamentals_base,Quarterly shares outstanding,raw value,currency/shares,financials_data/quarterly,"quarterly aligned to release date, then daily ffill",Aligned to filing/release date and forward-filled.
+free_cash_flow,fundamentals_base,Quarterly free cash flow,raw value,currency/shares,financials_data/quarterly,"quarterly aligned to release date, then daily ffill",Aligned to filing/release date and forward-filled.
+operating_cash_flow,fundamentals_base,Quarterly operating cash flow,raw value,currency/shares,financials_data/quarterly,"quarterly aligned to release date, then daily ffill",Aligned to filing/release date and forward-filled.
+roe,financial_ratio,Return on Equity,100 * net_income / total_equity,ratio or %,derived from fundamentals,"quarterly aligned to release date, then daily ffill",Derived from aligned quarterly fundamentals and forward-filled.
+roa,financial_ratio,Return on Assets,100 * net_income / total_assets,ratio or %,derived from fundamentals,"quarterly aligned to release date, then daily ffill",Derived from aligned quarterly fundamentals and forward-filled.
+op_margin,financial_ratio,Operating margin,100 * operating_income / total_revenue,ratio or %,derived from fundamentals,"quarterly aligned to release date, then daily ffill",Derived from aligned quarterly fundamentals and forward-filled.
+debt_to_equity,financial_ratio,Debt-to-equity ratio,total_debt / total_equity,ratio or %,derived from fundamentals,"quarterly aligned to release date, then daily ffill",Derived from aligned quarterly fundamentals and forward-filled.
+liquidity_ratio,financial_ratio,Cash-to-assets ratio,cash_equivalents / total_assets,ratio or %,derived from fundamentals,"quarterly aligned to release date, then daily ffill",Derived from aligned quarterly fundamentals and forward-filled.
+current_ratio,financial_ratio,Current ratio,current_assets / current_liabilities,ratio or %,derived from fundamentals,"quarterly aligned to release date, then daily ffill",Derived from aligned quarterly fundamentals and forward-filled.
+free_cf_margin,financial_ratio,Free cash flow margin,100 * free_cash_flow / total_revenue,ratio or %,derived from fundamentals,"quarterly aligned to release date, then daily ffill",Derived from aligned quarterly fundamentals and forward-filled.
+ocf_to_assets,financial_ratio,Operating cash flow to assets,operating_cash_flow / total_assets,ratio or %,derived from fundamentals,"quarterly aligned to release date, then daily ffill",Derived from aligned quarterly fundamentals and forward-filled.
+prev_revenue,financial_ratio,Previous quarter revenue,LAG_1(total_revenue),ratio or %,derived from fundamentals,"quarterly aligned to release date, then daily ffill",Derived from aligned quarterly fundamentals and forward-filled.
+revenue_growth,financial_ratio,Quarter-over-quarter revenue growth,100 * (total_revenue - prev_revenue) / prev_revenue,ratio or %,derived from fundamentals,"quarterly aligned to release date, then daily ffill",Derived from aligned quarterly fundamentals and forward-filled.
+market_cap,size_value,Market capitalization,Close_(t-1) * shares_outstanding_(t-1),currency,price + fundamentals,daily,Explicitly lagged to avoid look-ahead.
+log_mktcap,size_value,Natural logarithm of market capitalization,"ln(market_cap), if market_cap > 0",log(currency),derived from market_cap,daily,
+book_to_market,size_value,Book-to-market ratio,total_equity_(t-1) / market_cap_t,ratio,fundamentals + market_cap,daily,Numerator is lagged for temporal consistency.
+GDP_GDP_SA_PC_QOQ,macro_gdp,SA PC QOQ,raw value,% / index,Macroeconomic_Data/GDP_quarterly.csv,"quarterly aligned to release date, then daily ffill",Release-date aligned and forward-filled.
+GDP_GDP_SA_PC_YOY,macro_gdp,SA PC YOY,raw value,% / index,Macroeconomic_Data/GDP_quarterly.csv,"quarterly aligned to release date, then daily ffill",Release-date aligned and forward-filled.
+GDP_GDP_NSA_PC_QOQ,macro_gdp,NSA PC QOQ,raw value,% / index,Macroeconomic_Data/GDP_quarterly.csv,"quarterly aligned to release date, then daily ffill",Release-date aligned and forward-filled.
+GDP_GDP_NSA_PC_YOY,macro_gdp,NSA PC YOY,raw value,% / index,Macroeconomic_Data/GDP_quarterly.csv,"quarterly aligned to release date, then daily ffill",Release-date aligned and forward-filled.
+IPI_IPI,macro_ipi,IPI,raw value,% / index,Macroeconomic_Data/IPI_quarterly.csv,"quarterly aligned to release date, then daily ffill",Release-date aligned and forward-filled.
+IPI_IPI_YOY,macro_ipi,YOY,raw value,% / index,Macroeconomic_Data/IPI_quarterly.csv,"quarterly aligned to release date, then daily ffill",Release-date aligned and forward-filled.
+IPI_IPI_QOQ,macro_ipi,QOQ,raw value,% / index,Macroeconomic_Data/IPI_quarterly.csv,"quarterly aligned to release date, then daily ffill",Release-date aligned and forward-filled.
+IPI_IPI_SA,macro_ipi,SA,raw value,% / index,Macroeconomic_Data/IPI_quarterly.csv,"quarterly aligned to release date, then daily ffill",Release-date aligned and forward-filled.
+IPI_IPI_SA_YOY,macro_ipi,SA YOY,raw value,% / index,Macroeconomic_Data/IPI_quarterly.csv,"quarterly aligned to release date, then daily ffill",Release-date aligned and forward-filled.
+IPI_IPI_SA_QOQ,macro_ipi,SA QOQ,raw value,% / index,Macroeconomic_Data/IPI_quarterly.csv,"quarterly aligned to release date, then daily ffill",Release-date aligned and forward-filled.
+IPI_Unnamed: 7,macro_ipi,Auxiliary column inherited from the raw IPI file,raw value,% / index,Macroeconomic_Data/IPI_quarterly.csv,"quarterly aligned to release date, then daily ffill",Usually empty/NaN; can be removed without losing information.
+UNEMP_UNRATE,macro_unemployment,UNRATE,raw value,% / p.p.,Macroeconomic_Data/Unemployment_Rate_monthly.csv,"monthly aligned to release date, then daily ffill",Release-date aligned and forward-filled.
+UNEMP_UNRATE_PC1,macro_unemployment,UNRATE PC1,raw value,% / p.p.,Macroeconomic_Data/Unemployment_Rate_monthly.csv,"monthly aligned to release date, then daily ffill",Release-date aligned and forward-filled.
+UNEMP_UNRATE_PCH,macro_unemployment,UNRATE PCH,raw value,% / p.p.,Macroeconomic_Data/Unemployment_Rate_monthly.csv,"monthly aligned to release date, then daily ffill",Release-date aligned and forward-filled.
+UNEMP_UNRATENSA,macro_unemployment,UNRATENSA,raw value,% / p.p.,Macroeconomic_Data/Unemployment_Rate_monthly.csv,"monthly aligned to release date, then daily ffill",Release-date aligned and forward-filled.
+UNEMP_UNRATENSA_PC1,macro_unemployment,UNRATENSA PC1,raw value,% / p.p.,Macroeconomic_Data/Unemployment_Rate_monthly.csv,"monthly aligned to release date, then daily ffill",Release-date aligned and forward-filled.
+UNEMP_UNRATENSA_PCH,macro_unemployment,UNRATENSA PCH,raw value,% / p.p.,Macroeconomic_Data/Unemployment_Rate_monthly.csv,"monthly aligned to release date, then daily ffill",Release-date aligned and forward-filled.

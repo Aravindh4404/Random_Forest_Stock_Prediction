@@ -1,4 +1,7 @@
 ConstructionDataset/all_companies_features.csv
 ConstructionDataset/cache/
+ConstructionDataset/smoke_tests/
 MultinomialLogit/__pycache__/
 __pycache__/
+MultinomialLogit/smoke_test_*/
+*.Rhistory
