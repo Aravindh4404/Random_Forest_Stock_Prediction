@@ -1,0 +1,4 @@
+,pred_down,pred_same,pred_up
+actual_down,18,23,29
+actual_same,17,20,27
+actual_up,17,9,16

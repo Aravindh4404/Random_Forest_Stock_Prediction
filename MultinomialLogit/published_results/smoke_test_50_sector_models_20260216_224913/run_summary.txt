@@ -1,0 +1,41 @@
+Sector-wise multinomial logit (LASSO)
+Run directory: C:\Users\jorge\OneDrive\Documentos\Data 606\Project\MultinomialLogit\runs\local\smoke_test_50_sector_models_20260216_224913
+Panel source mode: ticker-level + cache
+Panel cache path: C:\Users\jorge\OneDrive\Documentos\Data 606\Project\ConstructionDataset\cache\all_companies_features_runtime_cache.csv
+Smoke test target tickers: 50
+Smoke ticker random seed: 2026
+TimeSeriesSplit max_train_dates: 126
+Tau percentile scan: 10-45
+Tau kappa grid: 0.40, 0.50, 0.60
+Selection metric: 0*accuracy + 1*f1_macro
+Code snapshot: C:\Users\jorge\OneDrive\Documentos\Data 606\Project\MultinomialLogit\runs\local\smoke_test_50_sector_models_20260216_224913\_run_snapshot\run_sector_models_smoke50.py
+Tickers used: 50
+Sectors attempted: 11
+Sectors succeeded: 11
+Sectors failed: 0
+
+Top sectors by validation accuracy:
+                sector  n_tickers  val_accuracy  val_f1_macro
+     Consumer Cyclical          5      0.418182      0.410428
+           Industrials          5      0.413636      0.416859
+            Healthcare          5      0.409091      0.410109
+Communication Services          4      0.397727      0.373461
+            Technology          6      0.382576      0.356164
+    Consumer Defensive          4      0.363636      0.348507
+    Financial Services          5      0.336364      0.335907
+                Energy          4      0.323864      0.286154
+       Basic Materials          4      0.318182      0.295443
+             Utilities          4      0.318182      0.294325
+
+Bottom sectors by validation accuracy:
+                sector  n_tickers  val_accuracy  val_f1_macro
+           Industrials          5      0.413636      0.416859
+            Healthcare          5      0.409091      0.410109
+Communication Services          4      0.397727      0.373461
+            Technology          6      0.382576      0.356164
+    Consumer Defensive          4      0.363636      0.348507
+    Financial Services          5      0.336364      0.335907
+                Energy          4      0.323864      0.286154
+       Basic Materials          4      0.318182      0.295443
+             Utilities          4      0.318182      0.294325
+           Real Estate          4      0.306818      0.306870

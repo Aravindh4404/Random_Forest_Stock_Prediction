@@ -1,0 +1,31 @@
+{
+  "created_at_utc": "2026-02-17T04:49:13Z",
+  "script_name": "run_sector_models_smoke50.py",
+  "script_path": "C:\\Users\\jorge\\OneDrive\\Documentos\\Data 606\\Project\\MultinomialLogit\\run_sector_models_smoke50.py",
+  "python_version": "3.12.10",
+  "project_root": "C:\\Users\\jorge\\OneDrive\\Documentos\\Data 606\\Project",
+  "selection_metric": "0*accuracy + 1*f1_macro",
+  "combo_weight_accuracy": 0.0,
+  "combo_weight_f1": 1.0,
+  "smoke_test_n_tickers": 50,
+  "smoke_selection_seed": 2026,
+  "c_grid": [
+    0.001,
+    0.01,
+    0.1,
+    1.0
+  ],
+  "vif_threshold": 5.0,
+  "tau_percentile_scan_min": 10,
+  "tau_percentile_scan_max": 45,
+  "tau_kappa_grid": [
+    0.4,
+    0.5,
+    0.6
+  ],
+  "ts_max_train_dates": 126,
+  "panel_source_mode": "ticker-level + cache",
+  "panel_cache_path": "C:\\Users\\jorge\\OneDrive\\Documentos\\Data 606\\Project\\ConstructionDataset\\cache\\all_companies_features_runtime_cache.csv",
+  "git_commit": "d23aa8ac3f38534db16aef728d13ed78720ad39e",
+  "git_branch": "master"
+}
