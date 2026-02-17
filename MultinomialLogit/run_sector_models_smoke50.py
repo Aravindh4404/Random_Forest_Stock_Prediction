@@ -63,7 +63,6 @@ TAU_TOP_K_BY_BALANCE = 5
 VOL_TAU_KAPPA_GRID = np.array([0.4, 0.5, 0.6], dtype=float)
 VOL_TAU_STD_WINDOW = 20
 VOL_TAU_STD_MIN_PERIODS = 20
-TS_MAX_TRAIN_DATES = 126
 COMBO_WEIGHT_ACCURACY = 0.0
 COMBO_WEIGHT_F1 = 1.0
 MAX_ITER = 3000
@@ -103,7 +102,7 @@ def write_run_snapshot(out_dir: Path) -> None:
         "tau_percentile_scan_min": int(TAU_PERCENTILE_SCAN.min()),
         "tau_percentile_scan_max": int(TAU_PERCENTILE_SCAN.max()),
         "tau_kappa_grid": [float(x) for x in VOL_TAU_KAPPA_GRID],
-        "ts_max_train_dates": int(TS_MAX_TRAIN_DATES),
+        "ts_train_window_mode": "expanding",
         "panel_source_mode": "ticker-level + cache" if USE_TICKER_LEVEL_STORAGE else "single consolidated csv",
         "panel_cache_path": str(PANEL_CACHE_PATH),
     }
@@ -824,7 +823,7 @@ def run_sector_model(sector_name: str, sector_df: pd.DataFrame, out_dir: Path) -
 
     cv_splits = [
         (tr_idx, te_idx)
-        for _, tr_idx, te_idx in ts_splits_by_date(dtr, n_splits=n_splits, max_train_size=TS_MAX_TRAIN_DATES)
+        for _, tr_idx, te_idx in ts_splits_by_date(dtr, n_splits=n_splits)
     ]
     if len(cv_splits) == 0:
         raise ValueError("no valid time-series CV splits")
@@ -1013,7 +1012,8 @@ def run_sector_model(sector_name: str, sector_df: pd.DataFrame, out_dir: Path) -
         "best_l1_ratio": np.nan if best_hp["l1_ratio"] is None else float(best_hp["l1_ratio"]),
         "best_class_weight": str(best_hp["class_weight_label"]),
         "n_splits_used": int(n_splits),
-        "max_train_dates": int(TS_MAX_TRAIN_DATES),
+        "max_train_dates": np.nan,
+        "train_window_mode": "expanding",
         "selection_metric": f"{COMBO_WEIGHT_ACCURACY:.3g}*accuracy + {COMBO_WEIGHT_F1:.3g}*f1_macro",
         "train_accuracy": float(metrics_df.loc[metrics_df["split"] == "train", "accuracy"].iloc[0]),
         "train_f1_macro": float(metrics_df.loc[metrics_df["split"] == "train", "f1_macro"].iloc[0]),
@@ -1092,7 +1092,7 @@ def main():
         f"Panel cache path: {PANEL_CACHE_PATH}",
         f"Smoke test target tickers: {SMOKE_TEST_N_TICKERS}",
         f"Smoke ticker random seed: {SMOKE_SELECTION_SEED}",
-        f"TimeSeriesSplit max_train_dates: {TS_MAX_TRAIN_DATES}",
+        "TimeSeriesSplit train window: expanding (no max_train_size)",
         f"Tau percentile scan: {int(TAU_PERCENTILE_SCAN.min())}-{int(TAU_PERCENTILE_SCAN.max())}",
         f"Tau kappa grid: {', '.join(f'{x:.2f}' for x in VOL_TAU_KAPPA_GRID)}",
         f"Selection metric: {COMBO_WEIGHT_ACCURACY:.3g}*accuracy + {COMBO_WEIGHT_F1:.3g}*f1_macro",
