@@ -1,0 +1,87 @@
+feature,importance
+num__IPI_IPI_SA,0.10894791
+num__IPI_IPI_SA_YOY,0.0981968
+num__IPI_IPI_YOY,0.08859939
+num__IPI_IPI_QOQ,0.08588476
+num__IPI_IPI,0.08345145
+num__VIX_Lag1,0.0506818
+num__VIX_Lag20,0.047880344
+num__VIX_Lag10,0.044880882
+num__VIX_Lag5,0.039455283
+num__GDP_GDP_NSA_PC_QOQ,0.036219362
+num__GDP_GDP_SA_PC_QOQ,0.030231515
+num__Dividends_Lag2,0.023760969
+num__GDP_GDP_SA_PC_YOY,0.022971269
+num__Return_Lag2,0.02281408
+num__Sentiment_Lag10,0.01899191
+industry__industry_Real Estate Services,0.01795622
+num__Return_Lag3,0.017679974
+num__Return_Lag20,0.01677919
+num__Sentiment_Lag20,0.015707467
+num__Return_Lag5,0.009886836
+num__Return_Lag1,0.008540461
+num__Sentiment_Lag2,0.0066394797
+num__Return_Lag10,0.0064913826
+num__Volatility_20,0.0063827615
+num__Sentiment_Lag3,0.006257929
+num__Volatility_10,0.0049976497
+num__Sentiment_Lag1,0.0046946364
+num__Sentiment_Lag5,0.0045735114
+num__Volatility_5,0.0045337095
+ticker__ticker_SBAC,0.0037458588
+num__ocf_to_assets,0.0027805213
+num__Dividends_Lag5,0.0025787393
+num__debt_to_equity,0.0024284364
+num__roa,0.0023873795
+ticker__ticker_HST,0.0023861753
+num__book_to_market,0.0022925986
+industry__industry_REIT - Industrial,0.0022263448
+industry__industry_REIT - Hotel & Motel,0.0021937191
+ticker__ticker_WELL,0.0021249421
+num__current_ratio,0.0021041045
+ticker__ticker_EQIX,0.002093669
+num__free_cf_margin,0.0020207702
+ticker__ticker_O,0.0020010937
+num__ATR_5,0.0019983815
+industry__industry_REIT - Healthcare Facilities,0.0019966008
+ticker__ticker_WY,0.0019740707
+num__revenue_growth,0.0019141452
+num__log_mktcap,0.0019093368
+ticker__ticker_MAA,0.0018545592
+ticker__ticker_REG,0.0017647925
+num__liquidity_ratio,0.0017220003
+ticker__ticker_IRM,0.0016740309
+ticker__ticker_VTR,0.0014945136
+ticker__ticker_DLR,0.0014631125
+industry__industry_REIT - Diversified,0.0014200379
+industry__industry_REIT - Office,0.001321784
+num__op_margin,0.0012670154
+ticker__ticker_EQR,0.0010979471
+ticker__ticker_AVB,0.00096184073
+industry__industry_REIT - Specialty,0.0009355228
+num__Dividends_Lag3,0.0008970611
+ticker__ticker_SPG,0.00079907046
+ticker__ticker_CBRE,0.00075515686
+industry__industry_REIT - Retail,0.000724589
+ticker__ticker_CSGP,0.00060913985
+ticker__ticker_VICI,0.00054913166
+num__Dividends_Lag1,0.00041835688
+ticker__ticker_KIM,0.0003908112
+ticker__ticker_EXR,0.0002496986
+ticker__ticker_DOC,0.00024141335
+industry__industry_REIT - Residential,0.00014260685
+num__Dividends_Lag20,0.0
+num__Dividends_Lag10,0.0
+ticker__ticker_ARE,0.0
+ticker__ticker_AMT,0.0
+num__IPI_IPI_SA_QOQ,0.0
+num__GDP_GDP_NSA_PC_YOY,0.0
+ticker__ticker_BXP,0.0
+ticker__ticker_CPT,0.0
+ticker__ticker_CCI,0.0
+ticker__ticker_PSA,0.0
+ticker__ticker_FRT,0.0
+ticker__ticker_ESS,0.0
+ticker__ticker_PLD,0.0
+ticker__ticker_INVH,0.0
+ticker__ticker_UDR,0.0

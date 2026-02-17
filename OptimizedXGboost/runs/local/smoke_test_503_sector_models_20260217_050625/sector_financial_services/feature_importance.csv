@@ -1,0 +1,127 @@
+feature,importance
+num__IPI_IPI_SA_YOY,0.10248822
+num__IPI_IPI_QOQ,0.091036305
+num__IPI_IPI_YOY,0.07705786
+num__IPI_IPI,0.07689112
+num__VIX_Lag20,0.069745846
+num__IPI_IPI_SA_QOQ,0.05870496
+num__VIX_Lag5,0.055815395
+num__Return_Lag3,0.05353661
+num__VIX_Lag1,0.052662846
+num__VIX_Lag10,0.042574026
+num__GDP_GDP_SA_PC_YOY,0.027998894
+num__GDP_GDP_NSA_PC_QOQ,0.026765505
+num__GDP_GDP_SA_PC_QOQ,0.024724742
+num__GDP_GDP_NSA_PC_YOY,0.023575567
+num__Return_Lag2,0.022596799
+num__IPI_IPI_SA,0.014356378
+num__Volatility_5,0.01393155
+ticker__ticker_HOOD,0.013584134
+industry__industry_Financial Data & Stock Exchanges,0.013049768
+num__Sentiment_Lag2,0.009487255
+num__Return_Lag5,0.008369412
+num__Return_Lag10,0.0067781215
+ticker__ticker_COIN,0.006107881
+industry__industry_Capital Markets,0.0060314867
+num__Volatility_20,0.0058751674
+num__Dividends_Lag2,0.0054494333
+num__Return_Lag1,0.0051341145
+num__Sentiment_Lag1,0.0050271
+ticker__ticker_PGR,0.0049594385
+num__roa,0.0049341796
+num__Return_Lag20,0.004855251
+num__Sentiment_Lag3,0.0039513316
+industry__industry_Insurance - Reinsurance,0.0030717845
+ticker__ticker_CBOE,0.0029726976
+ticker__ticker_CME,0.0026057924
+industry__industry_Insurance Brokers,0.0025247205
+num__Sentiment_Lag5,0.002448419
+industry__industry_Insurance - Property & Casualty,0.0024395953
+num__Sentiment_Lag20,0.0023706295
+num__ocf_to_assets,0.002280207
+num__ATR_5,0.002234444
+num__liquidity_ratio,0.00217278
+num__book_to_market,0.002118973
+num__Sentiment_Lag10,0.001925419
+ticker__ticker_PYPL,0.0018559608
+num__revenue_growth,0.001821609
+num__op_margin,0.0017260055
+num__debt_to_equity,0.001700891
+num__free_cf_margin,0.0015657737
+num__current_ratio,0.0015384259
+ticker__ticker_IBKR,0.0010426687
+num__log_mktcap,0.0009423758
+industry__industry_Banks - Diversified,0.00093182747
+ticker__ticker_MS,0.0009207076
+num__roe,0.00084785506
+ticker__ticker_ICE,0.0008231917
+ticker__ticker_WRB,0.000821459
+ticker__ticker_L,0.0008008961
+ticker__ticker_BEN,0.0007995044
+ticker__ticker_AFL,0.00078750146
+ticker__ticker_EG,0.0007815911
+ticker__ticker_MSCI,0.000744426
+ticker__ticker_V,0.0007300134
+num__Dividends_Lag3,0.00072889426
+industry__industry_Insurance - Diversified,0.000623291
+ticker__ticker_TRV,0.00062249263
+ticker__ticker_COF,0.0006078905
+ticker__ticker_FDS,0.0005298458
+ticker__ticker_ERIE,0.00050805364
+num__Dividends_Lag20,0.0004934652
+ticker__ticker_BRO,0.00045832514
+ticker__ticker_CINF,0.0004508406
+ticker__ticker_HIG,0.00039417655
+ticker__ticker_AIG,0.00039255354
+ticker__ticker_AMP,0.0003755983
+ticker__ticker_TROW,0.00036474076
+industry__industry_Insurance - Life,0.00036203463
+num__Dividends_Lag1,0.00035758104
+ticker__ticker_RJF,0.00031748964
+ticker__ticker_IVZ,0.00031251015
+ticker__ticker_ACGL,0.00030149057
+ticker__ticker_NDAQ,0.00029851048
+ticker__ticker_AJG,0.00029652426
+ticker__ticker_WTW,0.00027872488
+ticker__ticker_AIZ,0.0002759129
+ticker__ticker_ALL,0.00026531436
+industry__industry_Credit Services,0.00025633603
+ticker__ticker_PRU,0.00025163294
+industry__industry_Asset Management,0.00019187282
+ticker__ticker_C,0.00018397477
+ticker__ticker_GL,0.00018161967
+num__Dividends_Lag5,0.00018155947
+num__Dividends_Lag10,0.00012818149
+ticker__ticker_AON,0.00012602829
+ticker__ticker_FITB,8.883112e-05
+ticker__ticker_MMC,8.582466e-05
+ticker__ticker_KEY,8.0040045e-05
+ticker__ticker_PFG,6.453318e-05
+ticker__ticker_USB,5.8493588e-05
+ticker__ticker_AXP,3.9761704e-05
+ticker__ticker_NTRS,3.6964055e-05
+ticker__ticker_BAC,2.3309469e-05
+ticker__ticker_BRK-B,0.0
+ticker__ticker_BLK,0.0
+ticker__ticker_BK,0.0
+ticker__ticker_APO,0.0
+ticker__ticker_CFG,0.0
+ticker__ticker_CB,0.0
+ticker__ticker_BX,0.0
+ticker__ticker_HBAN,0.0
+ticker__ticker_MTB,0.0
+ticker__ticker_MA,0.0
+ticker__ticker_MCO,0.0
+ticker__ticker_MET,0.0
+ticker__ticker_JPM,0.0
+ticker__ticker_KKR,0.0
+ticker__ticker_GS,0.0
+ticker__ticker_PNC,0.0
+ticker__ticker_SYF,0.0
+ticker__ticker_TFC,0.0
+ticker__ticker_SPGI,0.0
+ticker__ticker_STT,0.0
+ticker__ticker_SCHW,0.0
+ticker__ticker_RF,0.0
+industry__industry_Banks - Regional,0.0
+ticker__ticker_WFC,0.0

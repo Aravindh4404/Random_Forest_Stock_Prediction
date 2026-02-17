@@ -1,0 +1,45 @@
+{
+  "created_at_utc": "2026-02-17T12:06:25Z",
+  "script_name": "run_sector_models_all503.py",
+  "script_path": "C:\\Users\\Carolmon\\Documents\\Statistics class\\Data606\\Random forest prediction\\Random_Forest_Stock_Prediction\\OptimizedXGboost\\run_sector_models_all503.py",
+  "python_version": "3.14.2",
+  "project_root": "C:\\Users\\Carolmon\\Documents\\Statistics class\\Data606\\Random forest prediction\\Random_Forest_Stock_Prediction",
+  "target": "Next_Return",
+  "selection_metric": "min_rmse",
+  "smoke_test_n_tickers": 503,
+  "smoke_selection_seed": 2026,
+  "n_estimators_grid": [
+    200,
+    400
+  ],
+  "max_depth_grid": [
+    4,
+    6
+  ],
+  "min_child_weight_grid": [
+    1.0,
+    5.0
+  ],
+  "subsample_grid": [
+    0.7,
+    0.9
+  ],
+  "colsample_bynode_grid": [
+    0.7,
+    0.9
+  ],
+  "reg_alpha_grid": [
+    0.0,
+    0.1
+  ],
+  "reg_lambda_grid": [
+    1.0,
+    5.0
+  ],
+  "vif_threshold": 5.0,
+  "ts_max_train_dates": 126,
+  "panel_source_mode": "ticker-level + cache",
+  "panel_cache_path": "C:\\Users\\Carolmon\\Documents\\Statistics class\\Data606\\Random forest prediction\\Random_Forest_Stock_Prediction\\ConstructionDataset\\cache\\all_companies_features_runtime_cache.csv",
+  "git_commit": "6fc4e6b4b79df57d15202fe059681d770d992cfb",
+  "git_branch": "master"
+}

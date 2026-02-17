@@ -1,0 +1,16 @@
+step,dropped_feature,vif_at_drop,reason
+1,UNEMP_UNRATE,,near_zero_variance
+2,UNEMP_UNRATE_PC1,,near_zero_variance
+3,UNEMP_UNRATE_PCH,,near_zero_variance
+4,UNEMP_UNRATENSA,,near_zero_variance
+5,UNEMP_UNRATENSA_PC1,,near_zero_variance
+6,UNEMP_UNRATENSA_PCH,,near_zero_variance
+7,SMA_10,6586.9020569192535,vif_above_threshold
+8,SMA_20,1242.4030696378186,vif_above_threshold
+9,SMA_50,258.9008588048595,vif_above_threshold
+10,SMA_5,51.9590896969327,vif_above_threshold
+11,ATR_10,44.564500190002654,vif_above_threshold
+12,ATR_20,16.121406194355334,vif_above_threshold
+13,VIX_Lag2,13.047343560789633,vif_above_threshold
+14,VIX_Lag3,7.339658734820315,vif_above_threshold
+15,ATR_5,5.280817592027125,vif_above_threshold

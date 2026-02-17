@@ -1,0 +1,94 @@
+feature,importance
+num__IPI_IPI_SA_QOQ,0.14832827
+num__IPI_IPI_SA_YOY,0.0889964
+num__IPI_IPI_QOQ,0.08437304
+num__IPI_IPI,0.08273611
+num__IPI_IPI_YOY,0.063073836
+num__VIX_Lag20,0.035955843
+num__VIX_Lag1,0.03425025
+num__Return_Lag20,0.030425558
+num__VIX_Lag10,0.029438889
+num__Return_Lag10,0.022134189
+num__IPI_IPI_SA,0.020239705
+num__VIX_Lag5,0.019793577
+num__Return_Lag2,0.016426565
+num__GDP_GDP_NSA_PC_QOQ,0.016061064
+num__GDP_GDP_SA_PC_YOY,0.011823855
+num__GDP_GDP_SA_PC_QOQ,0.011236206
+ticker__ticker_LW,0.010662064
+ticker__ticker_DG,0.009021056
+industry__industry_Discount Stores,0.008878427
+num__Return_Lag3,0.008865586
+num__Volatility_10,0.008099072
+num__Sentiment_Lag20,0.008096792
+num__Return_Lag5,0.00797784
+ticker__ticker_KR,0.007409862
+industry__industry_Grocery Stores,0.0071778116
+num__Sentiment_Lag10,0.0068373512
+num__Return_Lag1,0.006659806
+num__Sentiment_Lag1,0.0066037667
+num__Sentiment_Lag5,0.0065612365
+ticker__ticker_DLTR,0.00648514
+num__Volatility_20,0.006295711
+num__log_mktcap,0.0060286354
+num__Sentiment_Lag2,0.0059802877
+num__Sentiment_Lag3,0.005865191
+industry__industry_Packaged Foods,0.005848226
+industry__industry_Beverages - Brewers,0.0057465723
+num__revenue_growth,0.005665551
+ticker__ticker_KDP,0.0054953694
+ticker__ticker_TGT,0.0051746406
+num__op_margin,0.004982202
+num__debt_to_equity,0.0048881774
+industry__industry_Farm Products,0.004825603
+num__Volatility_5,0.0047516185
+ticker__ticker_CHD,0.0046567176
+num__book_to_market,0.0043684957
+industry__industry_Confectioners,0.004045143
+num__Dividends_Lag2,0.0039651073
+ticker__ticker_STZ,0.003939901
+ticker__ticker_K,0.003808464
+num__ATR_5,0.0037970666
+num__ocf_to_assets,0.0037898433
+num__current_ratio,0.0037753042
+ticker__ticker_EL,0.0037667132
+ticker__ticker_BG,0.0037469768
+num__liquidity_ratio,0.0036689786
+ticker__ticker_BF-B,0.003524147
+ticker__ticker_TAP,0.0034174928
+ticker__ticker_CAG,0.003288171
+num__roa,0.003234037
+ticker__ticker_COST,0.0028271566
+industry__industry_Household & Personal Products,0.002799276
+ticker__ticker_MNST,0.0027880913
+ticker__ticker_MKC,0.0027567616
+ticker__ticker_MDLZ,0.002475656
+ticker__ticker_MO,0.0024183
+num__Dividends_Lag3,0.0022616293
+num__Dividends_Lag5,0.0019979293
+industry__industry_Beverages - Non-Alcoholic,0.0018736932
+ticker__ticker_KVUE,0.0017781663
+ticker__ticker_PEP,0.0017752927
+industry__industry_Tobacco,0.0015224717
+ticker__ticker_SJM,0.0014970388
+ticker__ticker_WMT,0.0013451587
+ticker__ticker_CLX,0.001286718
+ticker__ticker_KHC,0.0012076608
+ticker__ticker_KO,0.0012070953
+ticker__ticker_HRL,0.0011421194
+ticker__ticker_HSY,0.0011165345
+ticker__ticker_KMB,0.001105749
+num__Dividends_Lag10,0.0009866927
+ticker__ticker_SYY,0.0009501034
+num__Dividends_Lag1,0.00090432056
+ticker__ticker_GIS,0.000866305
+ticker__ticker_CPB,0.0007307321
+ticker__ticker_ADM,0.00060167187
+ticker__ticker_TSN,0.0004299072
+num__Dividends_Lag20,0.00037826557
+ticker__ticker_CL,0.0
+num__GDP_GDP_NSA_PC_YOY,0.0
+ticker__ticker_PG,0.0
+ticker__ticker_PM,0.0
+industry__industry_Beverages - Wineries & Distilleries,0.0
+industry__industry_Food Distribution,0.0

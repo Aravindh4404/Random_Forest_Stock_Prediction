@@ -1,0 +1,139 @@
+feature,importance
+num__VIX_Lag1,0.11723919
+num__IPI_IPI_SA_YOY,0.10201858
+num__IPI_IPI_QOQ,0.09576115
+num__VIX_Lag20,0.093319885
+num__VIX_Lag5,0.07743159
+num__IPI_IPI,0.076678544
+num__IPI_IPI_YOY,0.07664148
+num__VIX_Lag10,0.06585936
+num__Return_Lag3,0.041366737
+num__GDP_GDP_NSA_PC_YOY,0.029447837
+num__GDP_GDP_SA_PC_QOQ,0.021314144
+num__Return_Lag5,0.020074084
+num__Return_Lag2,0.019268462
+num__Sentiment_Lag2,0.015426886
+num__IPI_IPI_SA,0.012156207
+num__Sentiment_Lag10,0.011318493
+num__Return_Lag20,0.010824052
+num__Sentiment_Lag5,0.009648279
+num__Sentiment_Lag1,0.007933132
+num__Sentiment_Lag3,0.00741479
+num__current_ratio,0.0064906846
+ticker__ticker_BLDR,0.0061696577
+industry__industry_Aerospace & Defense,0.0060151187
+num__Volatility_10,0.0054204143
+num__Volatility_20,0.0051179975
+num__GDP_GDP_SA_PC_YOY,0.0049652434
+num__Return_Lag10,0.0045715813
+num__roe,0.0044680205
+num__Return_Lag1,0.003755814
+num__debt_to_equity,0.0035646285
+num__Volatility_5,0.0033644647
+ticker__ticker_POOL,0.0033052396
+num__ocf_to_assets,0.0030565357
+num__Sentiment_Lag20,0.0029958638
+num__op_margin,0.0028516892
+industry__industry_Industrial Distribution,0.0024805386
+ticker__ticker_UNP,0.0024515146
+num__log_mktcap,0.0024382598
+num__book_to_market,0.0019441636
+industry__industry_Waste Management,0.0016170174
+num__revenue_growth,0.0016150484
+ticker__ticker_HII,0.0014116083
+ticker__ticker_AOS,0.0012194525
+ticker__ticker_GD,0.0011814262
+ticker__ticker_WM,0.0009064058
+num__liquidity_ratio,0.0009031361
+num__roa,0.0008089001
+ticker__ticker_OTIS,0.00071744376
+ticker__ticker_CTAS,0.0006444939
+num__free_cf_margin,0.0006348652
+num__SMA_200,0.000507136
+industry__industry_Conglomerates,0.00045206718
+ticker__ticker_NOC,0.0002757839
+ticker__ticker_RSG,0.00019409391
+ticker__ticker_LMT,0.00019047134
+ticker__ticker_LUV,0.00015033699
+num__Dividends_Lag1,0.0
+num__Dividends_Lag2,0.0
+num__Dividends_Lag3,0.0
+num__Dividends_Lag5,0.0
+num__Dividends_Lag10,0.0
+num__Dividends_Lag20,0.0
+ticker__ticker_CPRT,0.0
+ticker__ticker_CMI,0.0
+ticker__ticker_DAL,0.0
+num__GDP_GDP_NSA_PC_QOQ,0.0
+ticker__ticker_AME,0.0
+ticker__ticker_AXON,0.0
+ticker__ticker_BA,0.0
+ticker__ticker_CARR,0.0
+ticker__ticker_CAT,0.0
+ticker__ticker_CHRW,0.0
+ticker__ticker_ALLE,0.0
+num__IPI_IPI_SA_QOQ,0.0
+ticker__ticker_GNRC,0.0
+ticker__ticker_GEV,0.0
+ticker__ticker_GE,0.0
+ticker__ticker_FDX,0.0
+ticker__ticker_EXPD,0.0
+ticker__ticker_FAST,0.0
+ticker__ticker_ETN,0.0
+ticker__ticker_EMR,0.0
+ticker__ticker_DE,0.0
+ticker__ticker_EME,0.0
+ticker__ticker_EFX,0.0
+ticker__ticker_DOV,0.0
+ticker__ticker_CSX,0.0
+ticker__ticker_IEX,0.0
+ticker__ticker_IR,0.0
+ticker__ticker_GPN,0.0
+ticker__ticker_LHX,0.0
+ticker__ticker_LII,0.0
+ticker__ticker_JBHT,0.0
+ticker__ticker_JCI,0.0
+ticker__ticker_NDSN,0.0
+ticker__ticker_NSC,0.0
+ticker__ticker_MMM,0.0
+ticker__ticker_MAS,0.0
+ticker__ticker_PCAR,0.0
+ticker__ticker_ODFL,0.0
+ticker__ticker_ITW,0.0
+ticker__ticker_J,0.0
+ticker__ticker_HUBB,0.0
+ticker__ticker_HWM,0.0
+ticker__ticker_GWW,0.0
+ticker__ticker_HON,0.0
+ticker__ticker_SNA,0.0
+ticker__ticker_RTX,0.0
+ticker__ticker_ROK,0.0
+ticker__ticker_PWR,0.0
+ticker__ticker_PH,0.0
+ticker__ticker_PNR,0.0
+ticker__ticker_TXT,0.0
+ticker__ticker_SWK,0.0
+ticker__ticker_URI,0.0
+ticker__ticker_UPS,0.0
+ticker__ticker_VRSK,0.0
+ticker__ticker_VLTO,0.0
+ticker__ticker_WAB,0.0
+ticker__ticker_UAL,0.0
+ticker__ticker_TT,0.0
+ticker__ticker_TDG,0.0
+industry__industry_Building Products & Equipment,0.0
+industry__industry_Airlines,0.0
+ticker__ticker_XYL,0.0
+industry__industry_Electrical Equipment & Parts,0.0
+industry__industry_Engineering & Construction,0.0
+industry__industry_Farm & Heavy Construction Machinery,0.0
+industry__industry_Integrated Freight & Logistics,0.0
+industry__industry_Consulting Services,0.0
+industry__industry_Pollution & Treatment Controls,0.0
+industry__industry_Railroads,0.0
+industry__industry_Security & Protection Services,0.0
+industry__industry_Rental & Leasing Services,0.0
+industry__industry_Specialty Business Services,0.0
+industry__industry_Specialty Industrial Machinery,0.0
+industry__industry_Tools & Accessories,0.0
+industry__industry_Trucking,0.0

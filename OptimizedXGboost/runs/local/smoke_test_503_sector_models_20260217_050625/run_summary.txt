@@ -1,0 +1,39 @@
+Sector-wise XGBoost random-forest regressor (next-day return target)
+Run directory: C:\Users\Carolmon\Documents\Statistics class\Data606\Random forest prediction\Random_Forest_Stock_Prediction\OptimizedXGboost\runs\local\smoke_test_503_sector_models_20260217_050625
+Panel source mode: ticker-level + cache
+Panel cache path: C:\Users\Carolmon\Documents\Statistics class\Data606\Random forest prediction\Random_Forest_Stock_Prediction\ConstructionDataset\cache\all_companies_features_runtime_cache.csv
+Smoke test target tickers: 503
+Smoke ticker random seed: 2026
+TimeSeriesSplit max_train_dates: 126
+Selection metric: min_rmse
+Code snapshot: C:\Users\Carolmon\Documents\Statistics class\Data606\Random forest prediction\Random_Forest_Stock_Prediction\OptimizedXGboost\runs\local\smoke_test_503_sector_models_20260217_050625\_run_snapshot\run_sector_models_all503.py
+Tickers used: 503
+Sectors attempted: 11
+Sectors succeeded: 11
+Sectors failed: 0
+
+Top sectors by validation RMSE (lowest first):
+                sector  n_tickers  val_rmse  val_mae    val_r2  val_accuracy
+           Real Estate         31  0.014218 0.009923  0.007224      0.525131
+             Utilities         31  0.014586 0.009882  0.040974      0.594899
+    Consumer Defensive         37  0.016719 0.011729  0.000609      0.508485
+    Financial Services         69  0.016842 0.011484 -0.010461      0.527132
+           Industrials         72  0.018084 0.012401 -0.023915      0.500969
+                Energy         22  0.018656 0.013609  0.004499      0.511628
+            Healthcare         60  0.020194 0.013411  0.007377      0.530233
+     Consumer Cyclical         55  0.020424 0.013719 -0.034946      0.490063
+       Basic Materials         20  0.022145 0.014938 -0.009261      0.537209
+Communication Services         25  0.023532 0.014330  0.000557      0.519070
+
+Bottom sectors by validation RMSE (highest first):
+                sector  n_tickers  val_rmse  val_mae    val_r2  val_accuracy
+             Utilities         31  0.014586 0.009882  0.040974      0.594899
+    Consumer Defensive         37  0.016719 0.011729  0.000609      0.508485
+    Financial Services         69  0.016842 0.011484 -0.010461      0.527132
+           Industrials         72  0.018084 0.012401 -0.023915      0.500969
+                Energy         22  0.018656 0.013609  0.004499      0.511628
+            Healthcare         60  0.020194 0.013411  0.007377      0.530233
+     Consumer Cyclical         55  0.020424 0.013719 -0.034946      0.490063
+       Basic Materials         20  0.022145 0.014938 -0.009261      0.537209
+Communication Services         25  0.023532 0.014330  0.000557      0.519070
+            Technology         81  0.026435 0.015977  0.000358      0.526270

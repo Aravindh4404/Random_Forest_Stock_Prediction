@@ -1,0 +1,39 @@
+Sector-wise XGBoost random-forest regressor (next-day return target)
+Run directory: C:\Users\Carolmon\Documents\Statistics class\Data606\Random forest prediction\Random_Forest_Stock_Prediction\OptimizedXGboost\runs\local\smoke_test_50_sector_models_20260217_002618
+Panel source mode: ticker-level + cache
+Panel cache path: C:\Users\Carolmon\Documents\Statistics class\Data606\Random forest prediction\Random_Forest_Stock_Prediction\ConstructionDataset\cache\all_companies_features_runtime_cache.csv
+Smoke test target tickers: 50
+Smoke ticker random seed: 2026
+TimeSeriesSplit max_train_dates: 126
+Selection metric: min_rmse
+Code snapshot: C:\Users\Carolmon\Documents\Statistics class\Data606\Random forest prediction\Random_Forest_Stock_Prediction\OptimizedXGboost\runs\local\smoke_test_50_sector_models_20260217_002618\_run_snapshot\run_sector_models_smoke50.py
+Tickers used: 50
+Sectors attempted: 11
+Sectors succeeded: 11
+Sectors failed: 0
+
+Top sectors by validation RMSE (lowest first):
+                sector  n_tickers  val_rmse  val_mae    val_r2  val_directional_accuracy
+             Utilities          4  0.012161 0.009540  0.018274                  0.534884
+    Consumer Defensive          4  0.014141 0.011031 -0.053952                  0.470930
+           Real Estate          4  0.014552 0.009964 -0.070169                  0.470930
+     Consumer Cyclical          5  0.015293 0.012134 -0.028697                  0.502326
+            Healthcare          5  0.015797 0.011610  0.000483                  0.534884
+    Financial Services          5  0.015902 0.011077 -0.005174                  0.576744
+                Energy          4  0.018059 0.013685 -0.005394                  0.511628
+       Basic Materials          4  0.019377 0.014244 -0.000586                  0.529070
+Communication Services          4  0.019598 0.011566 -0.008797                  0.500000
+           Industrials          5  0.019982 0.013987 -0.008840                  0.539535
+
+Bottom sectors by validation RMSE (highest first):
+                sector  n_tickers  val_rmse  val_mae    val_r2  val_directional_accuracy
+    Consumer Defensive          4  0.014141 0.011031 -0.053952                  0.470930
+           Real Estate          4  0.014552 0.009964 -0.070169                  0.470930
+     Consumer Cyclical          5  0.015293 0.012134 -0.028697                  0.502326
+            Healthcare          5  0.015797 0.011610  0.000483                  0.534884
+    Financial Services          5  0.015902 0.011077 -0.005174                  0.576744
+                Energy          4  0.018059 0.013685 -0.005394                  0.511628
+       Basic Materials          4  0.019377 0.014244 -0.000586                  0.529070
+Communication Services          4  0.019598 0.011566 -0.008797                  0.500000
+           Industrials          5  0.019982 0.013987 -0.008840                  0.539535
+            Technology          6  0.024953 0.014927  0.000608                  0.550388

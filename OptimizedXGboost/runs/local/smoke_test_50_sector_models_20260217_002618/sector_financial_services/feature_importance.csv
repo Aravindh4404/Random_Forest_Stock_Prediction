@@ -1,0 +1,53 @@
+feature,importance
+num__IPI_IPI_YOY,0.082750626
+num__IPI_IPI_QOQ,0.07228025
+num__IPI_IPI,0.07038268
+num__VIX_Lag5,0.055717383
+num__IPI_IPI_SA_YOY,0.05472056
+num__VIX_Lag1,0.03410138
+num__Return_Lag2,0.03272465
+num__VIX_Lag20,0.032605764
+num__GDP_GDP_NSA_PC_QOQ,0.026214337
+num__IPI_IPI_SA,0.024930416
+num__log_mktcap,0.023266796
+num__Sentiment_Lag3,0.022236945
+num__Volatility_20,0.021492144
+num__GDP_GDP_SA_PC_YOY,0.021105735
+num__VIX_Lag10,0.02060268
+ticker__ticker_WRB,0.020501925
+num__Return_Lag3,0.020369874
+num__revenue_growth,0.020253802
+num__free_cf_margin,0.019982098
+num__op_margin,0.019966772
+num__Sentiment_Lag5,0.019309701
+num__GDP_GDP_SA_PC_QOQ,0.01906996
+num__Sentiment_Lag2,0.018614855
+num__Sentiment_Lag1,0.018543247
+num__Volatility_5,0.017675573
+industry__industry_Insurance - Property & Casualty,0.017417664
+num__roe,0.016796919
+num__Return_Lag1,0.016502066
+ticker__ticker_PYPL,0.016001118
+num__ocf_to_assets,0.015728205
+num__Return_Lag5,0.015434424
+num__Return_Lag10,0.015123854
+num__Return_Lag20,0.014269972
+num__Sentiment_Lag10,0.013903749
+num__Sentiment_Lag20,0.013870796
+num__liquidity_ratio,0.011846789
+num__SMA_5,0.011383417
+ticker__ticker_BK,0.009776263
+num__current_ratio,0.0083048055
+industry__industry_Insurance - Life,0.007971434
+ticker__ticker_MET,0.0062484588
+num__Dividends_Lag2,0.0
+num__Dividends_Lag1,0.0
+num__Dividends_Lag5,0.0
+num__Dividends_Lag10,0.0
+num__Dividends_Lag20,0.0
+num__Dividends_Lag3,0.0
+num__GDP_GDP_NSA_PC_YOY,0.0
+ticker__ticker_ALL,0.0
+num__IPI_IPI_SA_QOQ,0.0
+industry__industry_Credit Services,0.0
+industry__industry_Banks - Diversified,0.0

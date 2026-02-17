@@ -1,0 +1,122 @@
+feature,importance
+num__VIX_Lag1,0.105321355
+num__IPI_IPI_YOY,0.07514041
+num__IPI_IPI,0.07288701
+num__VIX_Lag20,0.070687115
+num__IPI_IPI_SA_YOY,0.068227485
+num__VIX_Lag10,0.06707645
+num__IPI_IPI_QOQ,0.06408249
+num__VIX_Lag5,0.06068799
+num__GDP_GDP_SA_PC_YOY,0.054207586
+num__Return_Lag3,0.050381716
+num__GDP_GDP_SA_PC_QOQ,0.0363007
+num__Volatility_20,0.01620942
+industry__industry_Residential Construction,0.014219996
+num__IPI_IPI_SA,0.012033045
+num__Return_Lag20,0.011477918
+num__Volatility_10,0.011191718
+num__GDP_GDP_NSA_PC_QOQ,0.009299238
+num__Sentiment_Lag3,0.008927011
+ticker__ticker_TSLA,0.0086844
+num__Sentiment_Lag20,0.008493137
+ticker__ticker_MCD,0.008339014
+ticker__ticker_EXPE,0.007675875
+num__Return_Lag5,0.007547109
+num__Volatility_5,0.006623018
+num__current_ratio,0.006104436
+industry__industry_Footwear & Accessories,0.006073038
+industry__industry_Apparel Retail,0.0058645722
+num__Sentiment_Lag2,0.0055125416
+num__roa,0.005462479
+industry__industry_Travel Services,0.004830479
+num__Return_Lag1,0.004781645
+industry__industry_Auto Parts,0.0046088058
+num__Sentiment_Lag10,0.0044829086
+num__Return_Lag2,0.0043842434
+num__Sentiment_Lag5,0.0039738873
+num__book_to_market,0.0038545998
+num__roe,0.0036194178
+num__debt_to_equity,0.0035969878
+ticker__ticker_WSM,0.0035842974
+num__Dividends_Lag5,0.0035791185
+ticker__ticker_TSCO,0.0030822088
+num__ocf_to_assets,0.00296661
+num__Return_Lag10,0.002962819
+ticker__ticker_CCL,0.0029504031
+ticker__ticker_LKQ,0.0029209887
+num__liquidity_ratio,0.0027471024
+ticker__ticker_YUM,0.0026660282
+ticker__ticker_AZO,0.002663777
+ticker__ticker_DASH,0.0023915488
+industry__industry_Internet Retail,0.0023491879
+num__op_margin,0.0023018173
+num__log_mktcap,0.0022716487
+ticker__ticker_NKE,0.0022202476
+industry__industry_Specialty Retail,0.002164981
+ticker__ticker_NVR,0.0021145723
+num__Sentiment_Lag1,0.0020845137
+ticker__ticker_DPZ,0.0019744402
+num__free_cf_margin,0.0015939524
+ticker__ticker_BALL,0.0014633506
+ticker__ticker_TJX,0.0013851428
+ticker__ticker_KMX,0.0013794466
+ticker__ticker_ROL,0.0013584171
+industry__industry_Auto & Truck Dealerships,0.0013384287
+ticker__ticker_DRI,0.0012383098
+industry__industry_Personal Services,0.001238133
+ticker__ticker_AMZN,0.001228122
+ticker__ticker_SBUX,0.001164868
+ticker__ticker_EBAY,0.0011644872
+num__ATR_5,0.0010973411
+industry__industry_Restaurants,0.00108653
+num__revenue_growth,0.001054117
+ticker__ticker_PKG,0.001039032
+industry__industry_Resorts & Casinos,0.0010183741
+ticker__ticker_ROST,0.0009108306
+industry__industry_Packaging & Containers,0.0007435897
+ticker__ticker_APTV,0.00061097345
+ticker__ticker_IP,0.0005126928
+ticker__ticker_GPC,0.00047284248
+industry__industry_Home Improvement Retail,0.00046459268
+ticker__ticker_RCL,0.00044973235
+ticker__ticker_ULTA,0.00036256554
+ticker__ticker_CMG,0.00034739324
+ticker__ticker_SW,0.0003471924
+ticker__ticker_ORLY,0.00032209608
+num__Dividends_Lag2,0.00031504774
+ticker__ticker_NCLH,0.00029980546
+ticker__ticker_BBY,0.00029670584
+ticker__ticker_HAS,0.00020802564
+ticker__ticker_AMCR,0.00019348905
+industry__industry_Auto Manufacturers,0.00016469549
+num__Dividends_Lag3,0.00013401624
+industry__industry_Leisure,0.00012811263
+ticker__ticker_ABNB,0.0
+num__GDP_GDP_NSA_PC_YOY,0.0
+num__Dividends_Lag20,0.0
+num__Dividends_Lag1,0.0
+num__Dividends_Lag10,0.0
+ticker__ticker_BKNG,0.0
+ticker__ticker_AVY,0.0
+num__IPI_IPI_SA_QOQ,0.0
+ticker__ticker_GM,0.0
+ticker__ticker_HLT,0.0
+ticker__ticker_HD,0.0
+ticker__ticker_DECK,0.0
+ticker__ticker_DHI,0.0
+ticker__ticker_PHM,0.0
+ticker__ticker_MHK,0.0
+ticker__ticker_LOW,0.0
+ticker__ticker_LEN,0.0
+ticker__ticker_LULU,0.0
+ticker__ticker_LVS,0.0
+ticker__ticker_MAR,0.0
+ticker__ticker_MGM,0.0
+ticker__ticker_F,0.0
+ticker__ticker_WYNN,0.0
+ticker__ticker_RL,0.0
+ticker__ticker_TPR,0.0
+industry__industry_Apparel Manufacturing,0.0
+"industry__industry_Furnishings, Fixtures & Appliances",0.0
+industry__industry_Lodging,0.0
+industry__industry_Luxury Goods,0.0
