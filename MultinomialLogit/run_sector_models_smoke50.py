@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+import json
+import shutil
+import subprocess
+import sys
 import warnings
 from datetime import datetime
 from pathlib import Path
@@ -53,14 +57,15 @@ PENALTY_GRID_EXPANDED = ["l1", "elasticnet"]
 L1_RATIO_GRID = [0.2, 0.5, 0.8]  # only used when penalty == "elasticnet"
 CLASS_WEIGHT_GRID_BASIC = [None]
 CLASS_WEIGHT_GRID_EXPANDED = [None]
-TAU_PERCENTILE_SCAN = np.arange(60, 71, 1)
+# Balanced-target threshold scan (aiming for near-equal down/same/up class shares).
+TAU_PERCENTILE_SCAN = np.arange(10, 46, 1)
 TAU_TOP_K_BY_BALANCE = 5
 VOL_TAU_KAPPA_GRID = np.array([0.4, 0.5, 0.6], dtype=float)
 VOL_TAU_STD_WINDOW = 20
 VOL_TAU_STD_MIN_PERIODS = 20
 TS_MAX_TRAIN_DATES = 126
-COMBO_WEIGHT_ACCURACY = 0.5
-COMBO_WEIGHT_F1 = 0.5
+COMBO_WEIGHT_ACCURACY = 0.0
+COMBO_WEIGHT_F1 = 1.0
 MAX_ITER = 3000
 RANDOM_STATE = 42
 SMOKE_SELECTION_SEED = 2026
@@ -68,6 +73,62 @@ SMOKE_TEST_N_TICKERS = 50
 MIN_TICKERS_PER_SECTOR = 3
 VIF_THRESHOLD = 5.0
 VIF_EPS = 1e-12
+TARGET_ENGINEERING_MODE = "balanced_threshold"
+
+
+def write_run_snapshot(out_dir: Path) -> None:
+    """
+    Save an exact copy of the current training script plus run metadata.
+    This guarantees each run folder is self-contained and reproducible.
+    """
+    snapshot_dir = out_dir / "_run_snapshot"
+    snapshot_dir.mkdir(parents=True, exist_ok=True)
+
+    script_path = Path(__file__).resolve()
+    shutil.copy2(script_path, snapshot_dir / script_path.name)
+
+    metadata = {
+        "created_at_utc": datetime.utcnow().isoformat(timespec="seconds") + "Z",
+        "script_name": script_path.name,
+        "script_path": str(script_path),
+        "python_version": sys.version.split()[0],
+        "project_root": str(PROJECT_ROOT),
+        "selection_metric": f"{COMBO_WEIGHT_ACCURACY:.3g}*accuracy + {COMBO_WEIGHT_F1:.3g}*f1_macro",
+        "combo_weight_accuracy": float(COMBO_WEIGHT_ACCURACY),
+        "combo_weight_f1": float(COMBO_WEIGHT_F1),
+        "smoke_test_n_tickers": int(SMOKE_TEST_N_TICKERS),
+        "smoke_selection_seed": int(SMOKE_SELECTION_SEED),
+        "c_grid": [float(x) for x in C_GRID],
+        "vif_threshold": float(VIF_THRESHOLD),
+        "tau_percentile_scan_min": int(TAU_PERCENTILE_SCAN.min()),
+        "tau_percentile_scan_max": int(TAU_PERCENTILE_SCAN.max()),
+        "tau_kappa_grid": [float(x) for x in VOL_TAU_KAPPA_GRID],
+        "ts_max_train_dates": int(TS_MAX_TRAIN_DATES),
+        "panel_source_mode": "ticker-level + cache" if USE_TICKER_LEVEL_STORAGE else "single consolidated csv",
+        "panel_cache_path": str(PANEL_CACHE_PATH),
+    }
+
+    try:
+        commit = subprocess.check_output(
+            ["git", "rev-parse", "HEAD"],
+            cwd=PROJECT_ROOT,
+            text=True,
+        ).strip()
+        branch = subprocess.check_output(
+            ["git", "rev-parse", "--abbrev-ref", "HEAD"],
+            cwd=PROJECT_ROOT,
+            text=True,
+        ).strip()
+        metadata["git_commit"] = commit
+        metadata["git_branch"] = branch
+    except Exception:
+        metadata["git_commit"] = "unavailable"
+        metadata["git_branch"] = "unavailable"
+
+    (snapshot_dir / "run_metadata.json").write_text(
+        json.dumps(metadata, indent=2),
+        encoding="utf-8",
+    )
 
 NUMERIC_FEATURES = [
     "Dividends_Lag1",
@@ -201,7 +262,7 @@ def choose_balanced_threshold(train_ret: pd.Series, percentiles: np.ndarray) -> 
                 "imbalance_score": float(imb),
             }
         )
-    grid = pd.DataFrame(rows).sort_values(["percentile"]).reset_index(drop=True)
+    grid = pd.DataFrame(rows).sort_values(["imbalance_score", "percentile"]).reset_index(drop=True)
     return float(grid.loc[0, "threshold"]), grid
 
 
@@ -702,9 +763,6 @@ def run_sector_model(sector_name: str, sector_df: pd.DataFrame, out_dir: Path) -
     sec_dir.mkdir(parents=True, exist_ok=True)
 
     sector_df = sector_df.sort_values(["ticker", "Date"]).copy()
-    sector_df["_vol_std_ret"] = sector_df.groupby("ticker")[RETURN_COL].transform(
-        lambda s: s.rolling(VOL_TAU_STD_WINDOW, min_periods=VOL_TAU_STD_MIN_PERIODS).std().shift(1)
-    )
     train_df = sector_df[(sector_df["Date"] >= TRAIN_START) & (sector_df["Date"] <= TRAIN_END)].copy()
     val_df = sector_df[(sector_df["Date"] >= VAL_START) & (sector_df["Date"] <= VAL_END)].copy()
 
@@ -771,113 +829,28 @@ def run_sector_model(sector_name: str, sector_df: pd.DataFrame, out_dir: Path) -
     if len(cv_splits) == 0:
         raise ValueError("no valid time-series CV splits")
 
-    # Tune volatility-based tau: threshold_t = max(kappa * rolling_std_t, fallback_percentile_threshold).
-    _, tau_scan = choose_balanced_threshold(train_df[RETURN_COL], TAU_PERCENTILE_SCAN)
-    if TAU_TOP_K_BY_BALANCE >= len(tau_scan):
-        tau_candidates = tau_scan.copy()
-    else:
-        pick_idx = np.linspace(0, len(tau_scan) - 1, TAU_TOP_K_BY_BALANCE, dtype=int)
-        tau_candidates = tau_scan.iloc[pick_idx].copy()
-    tau_eval_rows: list[dict] = []
-    best_search = None
-    best_cv_summary = None
-    best_cv_detail = None
-    best_tau = None
-    best_tau_pct = None
-    best_kappa = None
-    best_train_thr = None
-    best_val_thr = None
-    best_score = -np.inf
-    best_acc = -np.inf
+    # Balanced-target engineering: choose fixed threshold that best balances down/same/up in train.
+    threshold, tau_eval_df = choose_balanced_threshold(train_df[RETURN_COL], TAU_PERCENTILE_SCAN)
+    best_tau_pct = float(tau_eval_df.loc[0, "percentile"])
+    best_kappa = np.nan
 
-    for _, tr in tau_candidates.iterrows():
-        tau_floor = float(tr["threshold"])
-        tau_pct = float(tr["percentile"])
-        for kappa in VOL_TAU_KAPPA_GRID:
-            train_thr = (float(kappa) * pd.to_numeric(train_df["_vol_std_ret"], errors="coerce")).fillna(tau_floor)
-            val_thr = (float(kappa) * pd.to_numeric(val_df["_vol_std_ret"], errors="coerce")).fillna(tau_floor)
-            train_thr = train_thr.clip(lower=0.0)
-            val_thr = val_thr.clip(lower=0.0)
+    y_train = make_return_status(train_df[RETURN_COL], threshold).reset_index(drop=True)
+    y_val = make_return_status(val_df[RETURN_COL], threshold).reset_index(drop=True)
+    if y_train.nunique() < 2 or y_val.nunique() < 2:
+        raise ValueError("target engineering produced fewer than 2 classes")
 
-            ytr_tau = make_return_status_dynamic(train_df[RETURN_COL], train_thr).reset_index(drop=True)
-            yval_tau = make_return_status_dynamic(val_df[RETURN_COL], val_thr).reset_index(drop=True)
-            train_class_count = ytr_tau.nunique()
-            val_class_count = yval_tau.nunique()
-            if train_class_count < 2 or val_class_count < 2:
-                tau_eval_rows.append(
-                    {
-                        "percentile": tau_pct,
-                        "threshold_floor": tau_floor,
-                        "kappa": float(kappa),
-                        "share_down": float(tr["share_down"]),
-                        "share_same": float(tr["share_same"]),
-                        "share_up": float(tr["share_up"]),
-                        "imbalance_score": float(tr["imbalance_score"]),
-                        "cv_best_f1_macro": np.nan,
-                        "cv_best_accuracy": np.nan,
-                        "cv_best_combo": np.nan,
-                        "n_valid_folds": 0,
-                        "valid_target_classes": 0,
-                    }
-                )
-                continue
+    best_search, cv_summary, cv_detail = run_gridsearch_with_target(
+        sector_name=sector_name,
+        Xtr=Xtr,
+        ytr=y_train,
+        preprocess=preprocess,
+        cv_splits=cv_splits,
+    )
 
-            gs_tau, cv_summary_tau, cv_detail_tau = run_gridsearch_with_target(
-                sector_name=sector_name,
-                Xtr=Xtr,
-                ytr=ytr_tau,
-                preprocess=preprocess,
-                cv_splits=cv_splits,
-            )
-            top_tau = cv_summary_tau.iloc[0]
-            tau_eval_rows.append(
-                {
-                    "percentile": tau_pct,
-                    "threshold_floor": tau_floor,
-                    "kappa": float(kappa),
-                    "share_down": float(tr["share_down"]),
-                    "share_same": float(tr["share_same"]),
-                    "share_up": float(tr["share_up"]),
-                    "imbalance_score": float(tr["imbalance_score"]),
-                    "cv_best_f1_macro": float(top_tau["mean_f1_macro"]),
-                    "cv_best_accuracy": float(top_tau["mean_accuracy"]),
-                    "cv_best_combo": float(top_tau["mean_combo"]),
-                    "n_valid_folds": int(top_tau["n_valid_folds"]),
-                    "valid_target_classes": int(train_class_count),
-                }
-            )
-
-            score = float(top_tau["mean_combo"])
-            acc = float(top_tau["mean_accuracy"])
-            if (score > best_score) or (np.isclose(score, best_score) and acc > best_acc):
-                best_score = score
-                best_acc = acc
-                best_tau = tau_floor
-                best_tau_pct = tau_pct
-                best_kappa = float(kappa)
-                best_search = gs_tau
-                best_cv_summary = cv_summary_tau
-                best_cv_detail = cv_detail_tau
-                best_train_thr = train_thr.reset_index(drop=True)
-                best_val_thr = val_thr.reset_index(drop=True)
-                y_train = ytr_tau.copy()
-                y_val = yval_tau.copy()
-
-    tau_eval_df = pd.DataFrame(tau_eval_rows).sort_values(
-        ["cv_best_combo", "cv_best_accuracy", "cv_best_f1_macro", "percentile", "kappa"],
-        ascending=[False, False, False, True, True],
-        na_position="last",
-    ).reset_index(drop=True)
-    if best_search is None or best_tau is None or best_cv_summary is None or best_cv_detail is None:
-        raise ValueError("tau tuning failed: no valid tau candidate")
-
-    threshold = float(best_tau)
-    cv_summary = best_cv_summary.copy()
-    cv_detail = best_cv_detail.copy()
     train_df = train_df.copy()
     val_df = val_df.copy()
-    train_df["tau_dynamic"] = best_train_thr.to_numpy() if best_train_thr is not None else np.nan
-    val_df["tau_dynamic"] = best_val_thr.to_numpy() if best_val_thr is not None else np.nan
+    train_df["tau_dynamic"] = float(threshold)
+    val_df["tau_dynamic"] = float(threshold)
     train_df[TARGET_COL] = y_train.to_numpy()
     val_df[TARGET_COL] = y_val.to_numpy()
     ytr = y_train.reset_index(drop=True)
@@ -1041,7 +1014,7 @@ def run_sector_model(sector_name: str, sector_df: pd.DataFrame, out_dir: Path) -
         "best_class_weight": str(best_hp["class_weight_label"]),
         "n_splits_used": int(n_splits),
         "max_train_dates": int(TS_MAX_TRAIN_DATES),
-        "selection_metric": "0.5*accuracy + 0.5*f1_macro",
+        "selection_metric": f"{COMBO_WEIGHT_ACCURACY:.3g}*accuracy + {COMBO_WEIGHT_F1:.3g}*f1_macro",
         "train_accuracy": float(metrics_df.loc[metrics_df["split"] == "train", "accuracy"].iloc[0]),
         "train_f1_macro": float(metrics_df.loc[metrics_df["split"] == "train", "f1_macro"].iloc[0]),
         "test_oof_accuracy": float(metrics_df.loc[metrics_df["split"] == "testing_tscv_oof", "accuracy"].iloc[0]),
@@ -1065,6 +1038,7 @@ def main():
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
     out_dir = OUT_BASE / f"smoke_test_{n_tickers}_sector_models_{ts}"
     out_dir.mkdir(parents=True, exist_ok=True)
+    write_run_snapshot(out_dir)
     pd.Series(sorted(selected_tickers), name="ticker").to_csv(out_dir / "used_tickers.txt", index=False, header=False)
     alloc_df.to_csv(out_dir / "sector_ticker_allocation.csv", index=False)
 
@@ -1121,6 +1095,8 @@ def main():
         f"TimeSeriesSplit max_train_dates: {TS_MAX_TRAIN_DATES}",
         f"Tau percentile scan: {int(TAU_PERCENTILE_SCAN.min())}-{int(TAU_PERCENTILE_SCAN.max())}",
         f"Tau kappa grid: {', '.join(f'{x:.2f}' for x in VOL_TAU_KAPPA_GRID)}",
+        f"Selection metric: {COMBO_WEIGHT_ACCURACY:.3g}*accuracy + {COMBO_WEIGHT_F1:.3g}*f1_macro",
+        f"Code snapshot: {out_dir / '_run_snapshot' / Path(__file__).name}",
         f"Tickers used: {n_tickers}",
         f"Sectors attempted: {len(sectors)}",
         f"Sectors succeeded: {len(summary_df)}",
