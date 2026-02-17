@@ -16,7 +16,7 @@ from sklearn.metrics import (
     confusion_matrix,
     f1_score,
 )
-from sklearn.model_selection import TimeSeriesSplit
+from sklearn.model_selection import GridSearchCV, TimeSeriesSplit
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
@@ -24,10 +24,16 @@ from sklearn.preprocessing import OneHotEncoder, StandardScaler
 warnings.filterwarnings("ignore")
 
 
-PROJECT_ROOT = Path(r"c:\Users\jorge\OneDrive\Documentos\Data 606\Project")
-FEATURE_DIR = PROJECT_ROOT / "feature_datasets"
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+PANEL_PATH = PROJECT_ROOT / "ConstructionDataset" / "all_companies_features.csv"
 SECTOR_PATH = PROJECT_ROOT / "stock_sectors.csv"
 OUT_BASE = PROJECT_ROOT / "MultinomialLogit"
+FEATURE_DIR_PRIMARY = PROJECT_ROOT / "ConstructionDataset" / "feature_datasets_enhanced"
+FEATURE_DIR_FALLBACK = PROJECT_ROOT / "feature_datasets"
+PANEL_CACHE_DIR = PROJECT_ROOT / "ConstructionDataset" / "cache"
+PANEL_CACHE_PATH = PANEL_CACHE_DIR / "all_companies_features_runtime_cache.csv"
+USE_TICKER_LEVEL_STORAGE = True
+FORCE_REBUILD_PANEL_CACHE = False
 
 START_DATE = pd.Timestamp("2024-11-01")
 END_DATE = pd.Timestamp("2025-10-31")
@@ -40,31 +46,87 @@ RETURN_COL = "Return"
 TARGET_COL = "Return_Status"
 
 N_SPLITS_DEFAULT = 5
-C_GRID = np.logspace(-2, 1.5, 8)
+C_GRID = np.array([0.001, 0.01, 0.1, 1.0], dtype=float)
+HYPERPARAM_SEARCH_MODE = "expanded"  # options: "basic", "expanded"
+PENALTY_GRID_BASIC = ["l1"]
+PENALTY_GRID_EXPANDED = ["l1", "elasticnet"]
+L1_RATIO_GRID = [0.2, 0.5, 0.8]  # only used when penalty == "elasticnet"
+CLASS_WEIGHT_GRID_BASIC = [None]
+CLASS_WEIGHT_GRID_EXPANDED = [None]
+TAU_PERCENTILE_SCAN = np.arange(60, 71, 1)
+TAU_TOP_K_BY_BALANCE = 5
+VOL_TAU_KAPPA_GRID = np.array([0.4, 0.5, 0.6], dtype=float)
+VOL_TAU_STD_WINDOW = 20
+VOL_TAU_STD_MIN_PERIODS = 20
+TS_MAX_TRAIN_DATES = 126
+COMBO_WEIGHT_ACCURACY = 0.5
+COMBO_WEIGHT_F1 = 0.5
 MAX_ITER = 3000
 RANDOM_STATE = 42
+SMOKE_SELECTION_SEED = 2026
+SMOKE_TEST_N_TICKERS = 50
+MIN_TICKERS_PER_SECTOR = 3
+VIF_THRESHOLD = 5.0
+VIF_EPS = 1e-12
 
 NUMERIC_FEATURES = [
+    "Dividends_Lag1",
+    "Dividends_Lag2",
+    "Dividends_Lag3",
+    "Dividends_Lag5",
+    "Dividends_Lag10",
+    "Dividends_Lag20",
     "Return_Lag1",
     "Return_Lag2",
     "Return_Lag3",
     "Return_Lag5",
     "Return_Lag10",
     "Return_Lag20",
+    "SMA_5",
+    "SMA_10",
+    "SMA_20",
+    "SMA_50",
+    "SMA_200",
+    "Volatility_5",
+     "ATR_5",
+    "Volatility_10",
+    "ATR_10",
+    "Volatility_20",
+    "ATR_20",
+    # "RSI_14",
+    # "MACD",
+    # "MACD_Signal",
+    # "MACD_Diff",
+    # "Volume_MA_20",
+    # "Volume_Ratio",
+    # "BB_Middle",
+    # "BB_Upper",
+    # "BB_Lower",
+    # "BB_Width",
     "Sentiment_Lag1",
     "Sentiment_Lag2",
     "Sentiment_Lag3",
     "Sentiment_Lag5",
     "Sentiment_Lag10",
     "Sentiment_Lag20",
-    "Sentiment_Lag1_squared",
-    "Sentiment_Lag1_cubic",
     "VIX_Lag1",
     "VIX_Lag2",
     "VIX_Lag3",
     "VIX_Lag5",
     "VIX_Lag10",
     "VIX_Lag20",
+    # "net_income",
+    # "total_revenue",
+    # "operating_income",
+    # "total_assets",
+    # "total_equity",
+    # "total_debt",
+    # "current_assets",
+    # "current_liabilities",
+    # "cash_equivalents",
+    # "shares_outstanding",
+    # "free_cash_flow",
+    # "operating_cash_flow",
     "roe",
     "roa",
     "op_margin",
@@ -74,6 +136,9 @@ NUMERIC_FEATURES = [
     "free_cf_margin",
     "revenue_growth",
     "ocf_to_assets",
+    # "prev_revenue",
+    "log_mktcap",
+    "book_to_market",
     "GDP_GDP_SA_PC_QOQ",
     "GDP_GDP_SA_PC_YOY",
     "GDP_GDP_NSA_PC_QOQ",
@@ -108,6 +173,15 @@ def make_return_status(ret: pd.Series, thr: float) -> pd.Series:
     return y
 
 
+def make_return_status_dynamic(ret: pd.Series, thr_series: pd.Series) -> pd.Series:
+    thr = pd.to_numeric(thr_series, errors="coerce").abs()
+    y = pd.Series(index=ret.index, dtype="object")
+    y[ret > thr] = "up"
+    y[ret < -thr] = "down"
+    y[ret.between(-thr, thr, inclusive="both")] = "same"
+    return y
+
+
 def choose_balanced_threshold(train_ret: pd.Series, percentiles: np.ndarray) -> tuple[float, pd.DataFrame]:
     train_ret = train_ret.dropna()
     abs_ret = train_ret.abs()
@@ -127,14 +201,14 @@ def choose_balanced_threshold(train_ret: pd.Series, percentiles: np.ndarray) -> 
                 "imbalance_score": float(imb),
             }
         )
-    grid = pd.DataFrame(rows).sort_values(["imbalance_score", "percentile"]).reset_index(drop=True)
+    grid = pd.DataFrame(rows).sort_values(["percentile"]).reset_index(drop=True)
     return float(grid.loc[0, "threshold"]), grid
 
 
-def ts_splits_by_date(dates: pd.Series, n_splits: int):
+def ts_splits_by_date(dates: pd.Series, n_splits: int, max_train_size: int | None = None):
     d = pd.to_datetime(dates)
     uniq = np.array(sorted(pd.Series(d.unique())))
-    tscv = TimeSeriesSplit(n_splits=n_splits)
+    tscv = TimeSeriesSplit(n_splits=n_splits, max_train_size=max_train_size)
     for fold, (tr_d_idx, te_d_idx) in enumerate(tscv.split(uniq), start=1):
         tr_dates = set(uniq[tr_d_idx])
         te_dates = set(uniq[te_d_idx])
@@ -144,9 +218,11 @@ def ts_splits_by_date(dates: pd.Series, n_splits: int):
 
 
 def metric_row(split: str, y_true: pd.Series, y_pred: np.ndarray) -> dict:
+    majority_class_acc = float(y_true.value_counts(normalize=True).max())
     return {
         "split": split,
         "accuracy": accuracy_score(y_true, y_pred),
+        "baseline_accuracy": majority_class_acc,
         "balanced_accuracy": balanced_accuracy_score(y_true, y_pred),
         "f1_macro": f1_score(y_true, y_pred, average="macro", zero_division=0),
         "f1_weighted": f1_score(y_true, y_pred, average="weighted", zero_division=0),
@@ -154,39 +230,461 @@ def metric_row(split: str, y_true: pd.Series, y_pred: np.ndarray) -> dict:
     }
 
 
+def build_param_grid() -> list[dict]:
+    if HYPERPARAM_SEARCH_MODE == "expanded":
+        penalties = PENALTY_GRID_EXPANDED
+        class_weights = CLASS_WEIGHT_GRID_EXPANDED
+    else:
+        penalties = PENALTY_GRID_BASIC
+        class_weights = CLASS_WEIGHT_GRID_BASIC
+
+    grid: list[dict] = []
+    if "l1" in penalties:
+        grid.append(
+            {
+                "model__C": [float(x) for x in C_GRID],
+                "model__penalty": ["l1"],
+                "model__class_weight": class_weights,
+            }
+        )
+    if "elasticnet" in penalties:
+        grid.append(
+            {
+                "model__C": [float(x) for x in C_GRID],
+                "model__penalty": ["elasticnet"],
+                "model__l1_ratio": [float(x) for x in L1_RATIO_GRID],
+                "model__class_weight": class_weights,
+            }
+        )
+    return grid
+
+
+def make_logit_model(hp: dict) -> LogisticRegression:
+    kwargs = {
+        "penalty": hp["penalty"],
+        "C": float(hp["C"]),
+        "solver": "saga",
+        "multi_class": "multinomial",
+        "max_iter": MAX_ITER,
+        "n_jobs": -1,
+        "random_state": RANDOM_STATE,
+        "class_weight": hp["class_weight"],
+    }
+    if hp["penalty"] == "elasticnet":
+        kwargs["l1_ratio"] = float(hp["l1_ratio"])
+    return LogisticRegression(**kwargs)
+
+
+def refit_by_combo(cv_results: dict) -> int:
+    acc = np.array(cv_results["mean_test_accuracy"], dtype=float)
+    f1 = np.array(cv_results["mean_test_f1_macro"], dtype=float)
+    combo = COMBO_WEIGHT_ACCURACY * acc + COMBO_WEIGHT_F1 * f1
+    combo = np.where(np.isfinite(combo), combo, -np.inf)
+    return int(np.argmax(combo))
+
+
+def run_gridsearch_with_target(
+    sector_name: str,
+    Xtr: pd.DataFrame,
+    ytr: pd.Series,
+    preprocess: ColumnTransformer,
+    cv_splits: list[tuple[np.ndarray, np.ndarray]],
+) -> tuple[GridSearchCV, pd.DataFrame, pd.DataFrame]:
+    base_model = LogisticRegression(
+        solver="saga",
+        multi_class="multinomial",
+        max_iter=MAX_ITER,
+        n_jobs=-1,
+        random_state=RANDOM_STATE,
+    )
+    gs_pipe = Pipeline(
+        steps=[
+            ("preprocess", preprocess),
+            ("model", base_model),
+        ]
+    )
+    gs = GridSearchCV(
+        estimator=gs_pipe,
+        param_grid=build_param_grid(),
+        scoring={"f1_macro": "f1_macro", "accuracy": "accuracy"},
+        refit=refit_by_combo,
+        cv=cv_splits,
+        n_jobs=1,
+        return_train_score=False,
+        error_score=np.nan,
+    )
+    gs.fit(Xtr, ytr)
+
+    cv_raw = pd.DataFrame(gs.cv_results_)
+    cv_summary = pd.DataFrame(
+        {
+            "C": pd.to_numeric(cv_raw["param_model__C"], errors="coerce"),
+            "penalty": cv_raw["param_model__penalty"].astype(str),
+            "l1_ratio": pd.to_numeric(cv_raw.get("param_model__l1_ratio"), errors="coerce"),
+            "class_weight_label": cv_raw["param_model__class_weight"].apply(
+                lambda x: "balanced" if str(x) == "balanced" else "none"
+            ),
+            "mean_accuracy": cv_raw["mean_test_accuracy"],
+            "std_accuracy": cv_raw["std_test_accuracy"],
+            "mean_f1_macro": cv_raw["mean_test_f1_macro"],
+            "std_f1_macro": cv_raw["std_test_f1_macro"],
+        }
+    )
+    cv_summary["mean_combo"] = (
+        COMBO_WEIGHT_ACCURACY * cv_summary["mean_accuracy"] + COMBO_WEIGHT_F1 * cv_summary["mean_f1_macro"]
+    )
+
+    f1_split_cols = [c for c in cv_raw.columns if c.startswith("split") and c.endswith("_test_f1_macro")]
+    acc_split_cols = [c for c in cv_raw.columns if c.startswith("split") and c.endswith("_test_accuracy")]
+    cv_summary["n_valid_folds"] = cv_raw[f1_split_cols].notna().sum(axis=1).astype(int)
+    cv_summary = (
+        cv_summary.sort_values(["mean_combo", "mean_accuracy", "mean_f1_macro"], ascending=False, na_position="last")
+        .reset_index(drop=True)
+    )
+
+    if cv_summary["mean_combo"].notna().sum() == 0:
+        raise ValueError("all CV folds invalid")
+
+    cv_base = pd.DataFrame(
+        {
+            "candidate_id": np.arange(len(cv_raw), dtype=int),
+            "C": pd.to_numeric(cv_raw["param_model__C"], errors="coerce"),
+            "penalty": cv_raw["param_model__penalty"].astype(str),
+            "l1_ratio": pd.to_numeric(cv_raw.get("param_model__l1_ratio"), errors="coerce"),
+            "class_weight_label": cv_raw["param_model__class_weight"].apply(
+                lambda x: "balanced" if str(x) == "balanced" else "none"
+            ),
+        }
+    )
+    fold_sizes = pd.DataFrame(
+        {
+            "fold": np.arange(1, len(cv_splits) + 1, dtype=int),
+            "n_samples": [int(len(te_idx)) for _, te_idx in cv_splits],
+        }
+    )
+
+    if acc_split_cols:
+        acc_long = (
+            cv_raw[acc_split_cols]
+            .copy()
+            .assign(candidate_id=np.arange(len(cv_raw), dtype=int))
+            .melt(id_vars="candidate_id", var_name="metric_col", value_name="accuracy")
+        )
+        acc_long["fold"] = (
+            acc_long["metric_col"].str.extract(r"^split(\d+)_test_accuracy$")[0].astype(int) + 1
+        )
+        acc_long = acc_long[["candidate_id", "fold", "accuracy"]]
+    else:
+        acc_long = cv_base[["candidate_id"]].merge(fold_sizes[["fold"]], how="cross")
+        acc_long["accuracy"] = np.nan
+
+    if f1_split_cols:
+        f1_long = (
+            cv_raw[f1_split_cols]
+            .copy()
+            .assign(candidate_id=np.arange(len(cv_raw), dtype=int))
+            .melt(id_vars="candidate_id", var_name="metric_col", value_name="f1_macro")
+        )
+        f1_long["fold"] = (
+            f1_long["metric_col"].str.extract(r"^split(\d+)_test_f1_macro$")[0].astype(int) + 1
+        )
+        f1_long = f1_long[["candidate_id", "fold", "f1_macro"]]
+    else:
+        f1_long = cv_base[["candidate_id"]].merge(fold_sizes[["fold"]], how="cross")
+        f1_long["f1_macro"] = np.nan
+
+    cv_detail = (
+        acc_long.merge(f1_long, on=["candidate_id", "fold"], how="outer")
+        .merge(cv_base, on="candidate_id", how="left")
+        .merge(fold_sizes, on="fold", how="left")
+        .sort_values(["candidate_id", "fold"])
+        .reset_index(drop=True)
+    )
+    cv_detail.insert(0, "sector", sector_name)
+    cv_detail = cv_detail[
+        ["sector", "C", "penalty", "l1_ratio", "class_weight_label", "fold", "accuracy", "f1_macro", "n_samples"]
+    ]
+    return gs, cv_summary, cv_detail
+
+
+def _compute_vif_from_matrix(x: pd.DataFrame) -> pd.Series:
+    """
+    Compute VIF via inverse correlation matrix.
+    Assumes x has no NaN and no near-zero variance columns.
+    """
+    arr = x.to_numpy(dtype=float)
+    arr = arr - arr.mean(axis=0)
+    std = arr.std(axis=0, ddof=0)
+    arr = arr / std
+    corr = np.corrcoef(arr, rowvar=False)
+    if np.ndim(corr) == 0:
+        return pd.Series([1.0], index=x.columns)
+    inv_corr = np.linalg.pinv(corr)
+    vif = np.diag(inv_corr)
+    vif = np.where(np.isfinite(vif), vif, np.inf)
+    vif = np.where(vif < 0, np.inf, vif)
+    return pd.Series(vif, index=x.columns)
+
+
+def iterative_vif_filter(
+    train_df: pd.DataFrame,
+    features: list[str],
+    threshold: float = VIF_THRESHOLD,
+) -> tuple[list[str], pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """
+    Iteratively drop numeric features with VIF > threshold.
+    Returns:
+      kept_features, vif_initial, vif_final, drop_steps
+    """
+    x_raw = train_df[features].copy()
+    for c in features:
+        x_raw[c] = pd.to_numeric(x_raw[c], errors="coerce")
+
+    kept = list(features)
+    steps: list[dict] = []
+    vif_initial = pd.DataFrame(columns=["feature", "vif"])
+    initial_captured = False
+    step_n = 0
+
+    while True:
+        if len(kept) <= 1:
+            break
+
+        x = x_raw[kept].copy()
+        med = x.median(numeric_only=True)
+        x = x.fillna(med)
+
+        # Drop all-missing / still-NaN columns after median fill
+        nan_cols = [c for c in kept if x[c].isna().all()]
+        if nan_cols:
+            for c in nan_cols:
+                step_n += 1
+                steps.append(
+                    {
+                        "step": step_n,
+                        "dropped_feature": c,
+                        "vif_at_drop": np.nan,
+                        "reason": "all_missing",
+                    }
+                )
+                kept.remove(c)
+            continue
+
+        # Drop near-zero variance columns (cannot compute stable VIF)
+        std = x[kept].std(ddof=0)
+        low_var_cols = std[std <= VIF_EPS].index.tolist()
+        if low_var_cols:
+            for c in low_var_cols:
+                step_n += 1
+                steps.append(
+                    {
+                        "step": step_n,
+                        "dropped_feature": c,
+                        "vif_at_drop": np.nan,
+                        "reason": "near_zero_variance",
+                    }
+                )
+                kept.remove(c)
+            continue
+
+        vif_s = _compute_vif_from_matrix(x[kept])
+        if not initial_captured:
+            vif_initial = (
+                vif_s.rename("vif")
+                .rename_axis("feature")
+                .reset_index()
+                .sort_values("vif", ascending=False)
+                .reset_index(drop=True)
+            )
+            initial_captured = True
+
+        max_feat = str(vif_s.idxmax())
+        max_vif = float(vif_s[max_feat])
+        if max_vif > threshold and len(kept) > 1:
+            step_n += 1
+            steps.append(
+                {
+                    "step": step_n,
+                    "dropped_feature": max_feat,
+                    "vif_at_drop": max_vif,
+                    "reason": "vif_above_threshold",
+                }
+            )
+            kept.remove(max_feat)
+            continue
+        break
+
+    if len(kept) == 0:
+        raise ValueError("VIF filtering removed all numeric features")
+
+    # Final VIF
+    x_final = x_raw[kept].copy()
+    med_final = x_final.median(numeric_only=True)
+    x_final = x_final.fillna(med_final)
+    std_final = x_final.std(ddof=0)
+    valid_final = [c for c in kept if std_final[c] > VIF_EPS and not x_final[c].isna().all()]
+    if len(valid_final) == 0:
+        raise ValueError("No valid features remaining after VIF filtering")
+    if len(valid_final) == 1:
+        vif_final = pd.DataFrame([{"feature": valid_final[0], "vif": 1.0}])
+    else:
+        vif_final = (
+            _compute_vif_from_matrix(x_final[valid_final])
+            .rename("vif")
+            .rename_axis("feature")
+            .reset_index()
+            .sort_values("vif", ascending=False)
+            .reset_index(drop=True)
+        )
+
+    drop_steps = pd.DataFrame(steps)
+    return valid_final, vif_initial, vif_final, drop_steps
+
+
+def select_smoke_tickers(
+    panel: pd.DataFrame,
+    n_tickers: int = SMOKE_TEST_N_TICKERS,
+    min_per_sector: int = MIN_TICKERS_PER_SECTOR,
+    random_state: int = RANDOM_STATE,
+) -> tuple[list[str], pd.DataFrame]:
+    uniq = panel[["ticker", "sector"]].dropna(subset=["ticker", "sector"]).drop_duplicates().copy()
+    if uniq.empty:
+        raise ValueError("No ticker/sector data available for smoke-test selection")
+
+    sector_counts = uniq.groupby("sector")["ticker"].nunique().sort_values(ascending=False)
+    sectors = sector_counts.index.tolist()
+    n_sectors = len(sectors)
+    if n_tickers < n_sectors:
+        raise ValueError(f"n_tickers={n_tickers} is smaller than number of sectors={n_sectors}")
+
+    base_alloc = {s: min(min_per_sector, int(sector_counts[s])) for s in sectors}
+    base_total = int(sum(base_alloc.values()))
+    if base_total > n_tickers:
+        base_alloc = {s: 1 for s in sectors}
+        base_total = n_sectors
+
+    remaining = n_tickers - base_total
+    extra_cap = {s: int(sector_counts[s] - base_alloc[s]) for s in sectors}
+    total_extra_cap = int(sum(extra_cap.values()))
+    alloc = base_alloc.copy()
+
+    if remaining > 0 and total_extra_cap > 0:
+        raw = {s: (remaining * extra_cap[s] / total_extra_cap) for s in sectors}
+        add = {s: min(extra_cap[s], int(np.floor(raw[s]))) for s in sectors}
+        for s in sectors:
+            alloc[s] += add[s]
+        left = remaining - int(sum(add.values()))
+        frac_order = sorted(sectors, key=lambda s: raw[s] - np.floor(raw[s]), reverse=True)
+        for s in frac_order:
+            if left <= 0:
+                break
+            if alloc[s] < sector_counts[s]:
+                alloc[s] += 1
+                left -= 1
+
+    rng = np.random.RandomState(random_state)
+    chosen: list[str] = []
+    for s in sectors:
+        pool = sorted(uniq.loc[uniq["sector"] == s, "ticker"].tolist())
+        k = int(min(alloc[s], len(pool)))
+        if k <= 0:
+            continue
+        if k == len(pool):
+            chosen.extend(pool)
+        else:
+            idx = rng.choice(len(pool), size=k, replace=False)
+            chosen.extend([pool[i] for i in sorted(idx)])
+
+    chosen = sorted(set(chosen))
+    if len(chosen) > n_tickers:
+        rng = np.random.RandomState(random_state)
+        chosen = sorted(rng.choice(chosen, size=n_tickers, replace=False).tolist())
+
+    alloc_df = (
+        pd.Series(chosen, name="ticker")
+        .to_frame()
+        .merge(uniq, on="ticker", how="left")
+        .groupby("sector", as_index=False)
+        .agg(n_tickers=("ticker", "nunique"))
+        .sort_values("n_tickers", ascending=False)
+    )
+    return chosen, alloc_df
+
+
 def build_panel_for_all() -> pd.DataFrame:
-    sector_map = pd.read_csv(SECTOR_PATH)[["ticker", "sector"]].dropna(subset=["ticker", "sector"]).copy()
+    def _discover_feature_files() -> tuple[list[Path], Path]:
+        primary_files = sorted(FEATURE_DIR_PRIMARY.glob("*_features.csv")) if FEATURE_DIR_PRIMARY.exists() else []
+        if primary_files:
+            return primary_files, FEATURE_DIR_PRIMARY
+        fallback_files = sorted(FEATURE_DIR_FALLBACK.glob("*_features.csv")) if FEATURE_DIR_FALLBACK.exists() else []
+        if fallback_files:
+            return fallback_files, FEATURE_DIR_FALLBACK
+        return [], FEATURE_DIR_PRIMARY
+
+    def _build_panel_from_ticker_files(required_cols: list[str]) -> pd.DataFrame:
+        files, source_dir = _discover_feature_files()
+        if not files:
+            raise FileNotFoundError(
+                f"No ticker-level feature files found in '{FEATURE_DIR_PRIMARY}' or '{FEATURE_DIR_FALLBACK}'."
+            )
+        print(f"Building consolidated panel from ticker-level files in: {source_dir}")
+        frames: list[pd.DataFrame] = []
+        required_set = set(required_cols)
+        for fp in files:
+            try:
+                cols = pd.read_csv(fp, nrows=0).columns.tolist()
+            except Exception:
+                continue
+            keep_cols = [c for c in cols if c in required_set]
+            if "Date" not in keep_cols:
+                continue
+            f = pd.read_csv(fp, usecols=keep_cols)
+            if "ticker" not in f.columns:
+                f["ticker"] = fp.name.replace("_features.csv", "")
+            for c in required_cols:
+                if c not in f.columns:
+                    f[c] = np.nan
+            f = f[required_cols]
+            frames.append(f)
+        if not frames:
+            raise ValueError("Failed to build panel from ticker-level files (no valid files with required columns).")
+        panel_built = pd.concat(frames, ignore_index=True)
+        print(f"Built consolidated panel from ticker files: rows={len(panel_built):,} cols={panel_built.shape[1]}")
+        return panel_built
+
+    sector_map = pd.read_csv(SECTOR_PATH)[["ticker", "sector", "industry"]].dropna(subset=["ticker", "sector"]).copy()
     sector_map["ticker"] = sector_map["ticker"].astype(str).str.strip()
-    ticker_to_sector = dict(zip(sector_map["ticker"], sector_map["sector"]))
+    needed = ["Date", "ticker", RETURN_COL] + NUMERIC_FEATURES
+    panel_raw: pd.DataFrame
+    if USE_TICKER_LEVEL_STORAGE:
+        if PANEL_CACHE_PATH.exists() and not FORCE_REBUILD_PANEL_CACHE:
+            print(f"Loading consolidated panel from cache: {PANEL_CACHE_PATH}")
+            panel_raw = pd.read_csv(PANEL_CACHE_PATH)
+        else:
+            panel_raw = _build_panel_from_ticker_files(needed)
+            PANEL_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+            panel_raw.to_csv(PANEL_CACHE_PATH, index=False)
+            print(f"Saved consolidated panel cache: {PANEL_CACHE_PATH}")
+    else:
+        if not PANEL_PATH.exists():
+            raise FileNotFoundError(f"Panel dataset not found: {PANEL_PATH}")
+        panel_raw = pd.read_csv(PANEL_PATH)
 
-    feature_files = sorted(FEATURE_DIR.glob("*_features.csv"))
-    if not feature_files:
-        raise FileNotFoundError(f"No *_features.csv files found in {FEATURE_DIR}")
+    missing = [c for c in needed if c not in panel_raw.columns]
+    if missing:
+        raise ValueError(f"Consolidated panel is missing columns: {missing}")
 
-    feature_tickers = [p.name.replace("_features.csv", "") for p in feature_files]
-    used_tickers = [t for t in feature_tickers if t in ticker_to_sector]
-    if not used_tickers:
-        raise ValueError("No overlap between feature files and stock_sectors.csv tickers")
+    panel = panel_raw[needed].copy()
+    panel["ticker"] = panel["ticker"].astype(str).str.strip()
+    panel = panel.merge(sector_map, on="ticker", how="inner")
+    if panel.empty:
+        raise ValueError("No overlap between panel tickers and stock_sectors.csv tickers")
 
-    frames = []
-    derived_cols = {"Sentiment_Lag1_squared", "Sentiment_Lag1_cubic"}
-    needed = ["Date", RETURN_COL] + [c for c in NUMERIC_FEATURES if c not in derived_cols]
-    for t in used_tickers:
-        p = FEATURE_DIR / f"{t}_features.csv"
-        df = pd.read_csv(p)
-        missing = [c for c in needed if c not in df.columns]
-        if missing:
-            raise ValueError(f"{p.name} missing columns: {missing}")
-        tmp = df[needed].copy()
-        tmp["Sentiment_Lag1"] = pd.to_numeric(tmp["Sentiment_Lag1"], errors="coerce")
-        tmp["Sentiment_Lag1_squared"] = tmp["Sentiment_Lag1"] ** 2
-        tmp["Sentiment_Lag1_cubic"] = tmp["Sentiment_Lag1"] ** 3
-        tmp["Date"] = pd.to_datetime(tmp["Date"], errors="coerce")
-        tmp["ticker"] = t
-        tmp["sector"] = ticker_to_sector[t]
-        frames.append(tmp)
+    for c in NUMERIC_FEATURES + [RETURN_COL]:
+        panel[c] = pd.to_numeric(panel[c], errors="coerce")
+    panel["Date"] = pd.to_datetime(panel["Date"], errors="coerce")
 
-    panel = pd.concat(frames, ignore_index=True).dropna(subset=["Date"])
+    panel = panel.dropna(subset=["Date"])
     panel = panel[(panel["Date"] >= START_DATE) & (panel["Date"] <= END_DATE)].copy()
     panel = panel.sort_values(["Date", "ticker"]).reset_index(drop=True)
     return panel
@@ -203,29 +701,26 @@ def run_sector_model(sector_name: str, sector_df: pd.DataFrame, out_dir: Path) -
     sec_dir = out_dir / f"sector_{sector_slug}"
     sec_dir.mkdir(parents=True, exist_ok=True)
 
+    sector_df = sector_df.sort_values(["ticker", "Date"]).copy()
+    sector_df["_vol_std_ret"] = sector_df.groupby("ticker")[RETURN_COL].transform(
+        lambda s: s.rolling(VOL_TAU_STD_WINDOW, min_periods=VOL_TAU_STD_MIN_PERIODS).std().shift(1)
+    )
     train_df = sector_df[(sector_df["Date"] >= TRAIN_START) & (sector_df["Date"] <= TRAIN_END)].copy()
     val_df = sector_df[(sector_df["Date"] >= VAL_START) & (sector_df["Date"] <= VAL_END)].copy()
 
     if len(train_df) < 120 or len(val_df) < 30:
         raise ValueError(f"insufficient samples (train={len(train_df)}, val={len(val_df)})")
 
-    threshold, thr_grid = choose_balanced_threshold(train_df[RETURN_COL], np.arange(10, 46, 1))
-    sector_df = sector_df.copy()
-    sector_df[TARGET_COL] = make_return_status(sector_df[RETURN_COL], threshold)
-    train_df = sector_df[(sector_df["Date"] >= TRAIN_START) & (sector_df["Date"] <= TRAIN_END)].copy()
-    val_df = sector_df[(sector_df["Date"] >= VAL_START) & (sector_df["Date"] <= VAL_END)].copy()
+    vif_features, vif_initial_df, vif_final_df, vif_steps_df = iterative_vif_filter(
+        train_df,
+        NUMERIC_FEATURES,
+        threshold=VIF_THRESHOLD,
+    )
 
-    X_train = train_df[NUMERIC_FEATURES + ["ticker"]].copy()
-    y_train = train_df[TARGET_COL].copy()
-    X_val = val_df[NUMERIC_FEATURES + ["ticker"]].copy()
-    y_val = val_df[TARGET_COL].copy()
-
-    train_class_count = y_train.nunique()
-    val_class_count = y_val.nunique()
-    if train_class_count < 2 or val_class_count < 2:
-        raise ValueError(
-            f"not enough target classes (train_classes={train_class_count}, val_classes={val_class_count})"
-        )
+    X_train = train_df[vif_features + ["ticker", "industry"]].copy()
+    y_train = pd.Series(index=train_df.index, dtype="object")
+    X_val = val_df[vif_features + ["ticker", "industry"]].copy()
+    y_val = pd.Series(index=val_df.index, dtype="object")
 
     preprocess = ColumnTransformer(
         transformers=[
@@ -237,7 +732,7 @@ def run_sector_model(sector_name: str, sector_df: pd.DataFrame, out_dir: Path) -
                         ("scaler", StandardScaler()),
                     ]
                 ),
-                NUMERIC_FEATURES,
+                vif_features,
             ),
             (
                 "ticker",
@@ -249,115 +744,166 @@ def run_sector_model(sector_name: str, sector_df: pd.DataFrame, out_dir: Path) -
                 ),
                 ["ticker"],
             ),
+            (
+                "industry",
+                Pipeline(
+                    steps=[
+                        ("imputer", SimpleImputer(strategy="most_frequent")),
+                        ("onehot", make_ohe()),
+                    ]
+                ),
+                ["industry"],
+            ),
         ],
         remainder="drop",
     )
 
     dtr = train_df["Date"].reset_index(drop=True)
     Xtr = X_train.reset_index(drop=True)
-    ytr = y_train.reset_index(drop=True)
 
     unique_train_dates = dtr.nunique()
     n_splits = min(N_SPLITS_DEFAULT, max(2, unique_train_dates - 1))
 
-    cv_rows = []
-    for C in C_GRID:
-        fold_scores = []
-        for fold, tr_idx, te_idx in ts_splits_by_date(dtr, n_splits=n_splits):
-            y_tr_fold = ytr.iloc[tr_idx]
-            y_te_fold = ytr.iloc[te_idx]
-            if y_tr_fold.nunique() < 2:
+    cv_splits = [
+        (tr_idx, te_idx)
+        for _, tr_idx, te_idx in ts_splits_by_date(dtr, n_splits=n_splits, max_train_size=TS_MAX_TRAIN_DATES)
+    ]
+    if len(cv_splits) == 0:
+        raise ValueError("no valid time-series CV splits")
+
+    # Tune volatility-based tau: threshold_t = max(kappa * rolling_std_t, fallback_percentile_threshold).
+    _, tau_scan = choose_balanced_threshold(train_df[RETURN_COL], TAU_PERCENTILE_SCAN)
+    if TAU_TOP_K_BY_BALANCE >= len(tau_scan):
+        tau_candidates = tau_scan.copy()
+    else:
+        pick_idx = np.linspace(0, len(tau_scan) - 1, TAU_TOP_K_BY_BALANCE, dtype=int)
+        tau_candidates = tau_scan.iloc[pick_idx].copy()
+    tau_eval_rows: list[dict] = []
+    best_search = None
+    best_cv_summary = None
+    best_cv_detail = None
+    best_tau = None
+    best_tau_pct = None
+    best_kappa = None
+    best_train_thr = None
+    best_val_thr = None
+    best_score = -np.inf
+    best_acc = -np.inf
+
+    for _, tr in tau_candidates.iterrows():
+        tau_floor = float(tr["threshold"])
+        tau_pct = float(tr["percentile"])
+        for kappa in VOL_TAU_KAPPA_GRID:
+            train_thr = (float(kappa) * pd.to_numeric(train_df["_vol_std_ret"], errors="coerce")).fillna(tau_floor)
+            val_thr = (float(kappa) * pd.to_numeric(val_df["_vol_std_ret"], errors="coerce")).fillna(tau_floor)
+            train_thr = train_thr.clip(lower=0.0)
+            val_thr = val_thr.clip(lower=0.0)
+
+            ytr_tau = make_return_status_dynamic(train_df[RETURN_COL], train_thr).reset_index(drop=True)
+            yval_tau = make_return_status_dynamic(val_df[RETURN_COL], val_thr).reset_index(drop=True)
+            train_class_count = ytr_tau.nunique()
+            val_class_count = yval_tau.nunique()
+            if train_class_count < 2 or val_class_count < 2:
+                tau_eval_rows.append(
+                    {
+                        "percentile": tau_pct,
+                        "threshold_floor": tau_floor,
+                        "kappa": float(kappa),
+                        "share_down": float(tr["share_down"]),
+                        "share_same": float(tr["share_same"]),
+                        "share_up": float(tr["share_up"]),
+                        "imbalance_score": float(tr["imbalance_score"]),
+                        "cv_best_f1_macro": np.nan,
+                        "cv_best_accuracy": np.nan,
+                        "cv_best_combo": np.nan,
+                        "n_valid_folds": 0,
+                        "valid_target_classes": 0,
+                    }
+                )
                 continue
-            clf = Pipeline(
-                steps=[
-                    ("preprocess", preprocess),
-                    (
-                        "model",
-                        LogisticRegression(
-                            penalty="l1",
-                            C=float(C),
-                            solver="saga",
-                            multi_class="multinomial",
-                            max_iter=MAX_ITER,
-                            n_jobs=-1,
-                            random_state=RANDOM_STATE,
-                        ),
-                    ),
-                ]
-            )
-            clf.fit(Xtr.iloc[tr_idx], y_tr_fold)
-            pred = clf.predict(Xtr.iloc[te_idx])
 
-            acc = accuracy_score(y_te_fold, pred)
-            f1m = f1_score(y_te_fold, pred, average="macro", zero_division=0)
-            cv_rows.append(
-                {
-                    "sector": sector_name,
-                    "C": float(C),
-                    "fold": fold,
-                    "accuracy": acc,
-                    "f1_macro": f1m,
-                    "n_samples": len(te_idx),
-                }
+            gs_tau, cv_summary_tau, cv_detail_tau = run_gridsearch_with_target(
+                sector_name=sector_name,
+                Xtr=Xtr,
+                ytr=ytr_tau,
+                preprocess=preprocess,
+                cv_splits=cv_splits,
             )
-            fold_scores.append(f1m)
-
-        if not fold_scores:
-            cv_rows.append(
+            top_tau = cv_summary_tau.iloc[0]
+            tau_eval_rows.append(
                 {
-                    "sector": sector_name,
-                    "C": float(C),
-                    "fold": -1,
-                    "accuracy": np.nan,
-                    "f1_macro": np.nan,
-                    "n_samples": 0,
+                    "percentile": tau_pct,
+                    "threshold_floor": tau_floor,
+                    "kappa": float(kappa),
+                    "share_down": float(tr["share_down"]),
+                    "share_same": float(tr["share_same"]),
+                    "share_up": float(tr["share_up"]),
+                    "imbalance_score": float(tr["imbalance_score"]),
+                    "cv_best_f1_macro": float(top_tau["mean_f1_macro"]),
+                    "cv_best_accuracy": float(top_tau["mean_accuracy"]),
+                    "cv_best_combo": float(top_tau["mean_combo"]),
+                    "n_valid_folds": int(top_tau["n_valid_folds"]),
+                    "valid_target_classes": int(train_class_count),
                 }
             )
 
-    cv_detail = pd.DataFrame(cv_rows)
-    cv_summary = (
-        cv_detail.groupby("C", as_index=False)
-        .agg(
-            mean_accuracy=("accuracy", "mean"),
-            std_accuracy=("accuracy", "std"),
-            mean_f1_macro=("f1_macro", "mean"),
-            std_f1_macro=("f1_macro", "std"),
-            n_valid_folds=("f1_macro", lambda s: int(s.notna().sum())),
-        )
-        .sort_values(["mean_f1_macro", "mean_accuracy"], ascending=False, na_position="last")
-        .reset_index(drop=True)
-    )
+            score = float(top_tau["mean_combo"])
+            acc = float(top_tau["mean_accuracy"])
+            if (score > best_score) or (np.isclose(score, best_score) and acc > best_acc):
+                best_score = score
+                best_acc = acc
+                best_tau = tau_floor
+                best_tau_pct = tau_pct
+                best_kappa = float(kappa)
+                best_search = gs_tau
+                best_cv_summary = cv_summary_tau
+                best_cv_detail = cv_detail_tau
+                best_train_thr = train_thr.reset_index(drop=True)
+                best_val_thr = val_thr.reset_index(drop=True)
+                y_train = ytr_tau.copy()
+                y_val = yval_tau.copy()
 
-    if cv_summary["mean_f1_macro"].notna().sum() == 0:
-        raise ValueError("all CV folds invalid")
+    tau_eval_df = pd.DataFrame(tau_eval_rows).sort_values(
+        ["cv_best_combo", "cv_best_accuracy", "cv_best_f1_macro", "percentile", "kappa"],
+        ascending=[False, False, False, True, True],
+        na_position="last",
+    ).reset_index(drop=True)
+    if best_search is None or best_tau is None or best_cv_summary is None or best_cv_detail is None:
+        raise ValueError("tau tuning failed: no valid tau candidate")
 
-    best_C = float(cv_summary.loc[cv_summary["mean_f1_macro"].notna()].iloc[0]["C"])
+    threshold = float(best_tau)
+    cv_summary = best_cv_summary.copy()
+    cv_detail = best_cv_detail.copy()
+    train_df = train_df.copy()
+    val_df = val_df.copy()
+    train_df["tau_dynamic"] = best_train_thr.to_numpy() if best_train_thr is not None else np.nan
+    val_df["tau_dynamic"] = best_val_thr.to_numpy() if best_val_thr is not None else np.nan
+    train_df[TARGET_COL] = y_train.to_numpy()
+    val_df[TARGET_COL] = y_val.to_numpy()
+    ytr = y_train.reset_index(drop=True)
 
-    model = Pipeline(
-        steps=[
-            ("preprocess", preprocess),
-            (
-                "model",
-                LogisticRegression(
-                    penalty="l1",
-                    C=best_C,
-                    solver="saga",
-                    multi_class="multinomial",
-                    max_iter=MAX_ITER,
-                    n_jobs=-1,
-                    random_state=RANDOM_STATE,
-                ),
-            ),
-        ]
-    )
-    model.fit(X_train, y_train)
+    best_params = best_search.best_params_
+    best_hp = {
+        "C": float(best_params["model__C"]),
+        "penalty": str(best_params["model__penalty"]),
+        "l1_ratio": None
+        if ("model__l1_ratio" not in best_params or best_params["model__l1_ratio"] is None)
+        else float(best_params["model__l1_ratio"]),
+        "class_weight": best_params.get("model__class_weight", None),
+        "class_weight_label": "balanced"
+        if best_params.get("model__class_weight", None) == "balanced"
+        else "none",
+    }
+
+    # GridSearchCV already refits the best estimator on full training data.
+    model = best_search.best_estimator_
     pred_train = model.predict(X_train)
     pred_val = model.predict(X_val)
 
     fold_rows = []
     oof_true = []
     oof_pred = []
-    for fold, tr_idx, te_idx in ts_splits_by_date(dtr, n_splits=n_splits):
+    for fold, (tr_idx, te_idx) in enumerate(cv_splits, start=1):
         y_tr_fold = ytr.iloc[tr_idx]
         y_te_fold = ytr.iloc[te_idx]
         if y_tr_fold.nunique() < 2:
@@ -367,15 +913,7 @@ def run_sector_model(sector_name: str, sector_df: pd.DataFrame, out_dir: Path) -
                 ("preprocess", preprocess),
                 (
                     "model",
-                    LogisticRegression(
-                        penalty="l1",
-                        C=best_C,
-                        solver="saga",
-                        multi_class="multinomial",
-                        max_iter=MAX_ITER,
-                        n_jobs=-1,
-                        random_state=RANDOM_STATE,
-                    ),
+                    make_logit_model(best_hp),
                 ),
             ]
         )
@@ -428,7 +966,7 @@ def run_sector_model(sector_name: str, sector_df: pd.DataFrame, out_dir: Path) -
     )
     metrics_df.insert(0, "sector", sector_name)
 
-    val_pred = val_df[["Date", "ticker", "sector", RETURN_COL, TARGET_COL]].copy().reset_index(drop=True)
+    val_pred = val_df[["Date", "ticker", "sector", "industry", RETURN_COL, TARGET_COL]].copy().reset_index(drop=True)
     val_pred["pred_status"] = pred_val
 
     proba = model.predict_proba(X_val)
@@ -450,14 +988,32 @@ def run_sector_model(sector_name: str, sector_df: pd.DataFrame, out_dir: Path) -
     coef_df["max_abs_coef"] = coef_df.abs().max(axis=1)
     coef_df = coef_df.sort_values("max_abs_coef", ascending=False)
 
-    thr_grid.to_csv(sec_dir / "threshold_grid_train_percentiles.csv", index=False)
+    tau_eval_df.to_csv(sec_dir / "threshold_grid_train_percentiles.csv", index=False)
     cv_detail.to_csv(sec_dir / "cv_detail_by_fold.csv", index=False)
-    cv_summary.to_csv(sec_dir / "cv_summary_by_C.csv", index=False)
+    cv_summary.to_csv(sec_dir / "cv_summary_hyperparams.csv", index=False)
+    cv_summary_by_c = (
+        cv_detail.groupby("C", as_index=False)
+        .agg(
+            mean_accuracy=("accuracy", "mean"),
+            std_accuracy=("accuracy", "std"),
+            mean_f1_macro=("f1_macro", "mean"),
+            std_f1_macro=("f1_macro", "std"),
+            n_valid_folds=("f1_macro", lambda s: int(s.notna().sum())),
+        )
+        .assign(mean_combo=lambda d: COMBO_WEIGHT_ACCURACY * d["mean_accuracy"] + COMBO_WEIGHT_F1 * d["mean_f1_macro"])
+        .sort_values(["mean_combo", "mean_accuracy", "mean_f1_macro"], ascending=False, na_position="last")
+        .reset_index(drop=True)
+    )
+    cv_summary_by_c.to_csv(sec_dir / "cv_summary_by_C.csv", index=False)
     metrics_df.to_csv(sec_dir / "metrics_train_testing_validation.csv", index=False)
     fold_df.to_csv(sec_dir / "testing_tscv_fold_metrics.csv", index=False)
     val_pred.to_csv(sec_dir / "validation_predictions.csv", index=False)
     cm_df.to_csv(sec_dir / "validation_confusion_matrix_counts.csv", index=True)
     coef_df.to_csv(sec_dir / "lasso_coefficients.csv", index=True)
+    vif_initial_df.to_csv(sec_dir / "vif_initial.csv", index=False)
+    vif_final_df.to_csv(sec_dir / "vif_final.csv", index=False)
+    vif_steps_df.to_csv(sec_dir / "vif_elimination_steps.csv", index=False)
+    pd.Series(vif_features, name="feature").to_csv(sec_dir / "vif_features_kept.txt", index=False, header=False)
     (sec_dir / "train_classification_report.txt").write_text(
         classification_report(y_train, pred_train, digits=4, zero_division=0), encoding="utf-8"
     )
@@ -465,14 +1021,27 @@ def run_sector_model(sector_name: str, sector_df: pd.DataFrame, out_dir: Path) -
         classification_report(y_val, pred_val, digits=4, zero_division=0), encoding="utf-8"
     )
 
+    threshold_effective = float(pd.to_numeric(train_df["tau_dynamic"], errors="coerce").median())
     summary = {
         "sector": sector_name,
         "n_tickers": int(sector_df["ticker"].nunique()),
         "n_train": int(len(train_df)),
         "n_val": int(len(val_df)),
-        "threshold": float(threshold),
-        "best_C": float(best_C),
+        "n_industries": int(train_df["industry"].dropna().nunique()),
+        "n_features_before_vif": int(len(NUMERIC_FEATURES)),
+        "n_features_after_vif": int(len(vif_features)),
+        "n_features_dropped_vif": int(len(NUMERIC_FEATURES) - len(vif_features)),
+        "threshold": threshold_effective,
+        "threshold_floor": float(threshold),
+        "tau_percentile": float(best_tau_pct) if best_tau_pct is not None else np.nan,
+        "tau_kappa": float(best_kappa) if best_kappa is not None else np.nan,
+        "best_C": float(best_hp["C"]),
+        "best_penalty": str(best_hp["penalty"]),
+        "best_l1_ratio": np.nan if best_hp["l1_ratio"] is None else float(best_hp["l1_ratio"]),
+        "best_class_weight": str(best_hp["class_weight_label"]),
         "n_splits_used": int(n_splits),
+        "max_train_dates": int(TS_MAX_TRAIN_DATES),
+        "selection_metric": "0.5*accuracy + 0.5*f1_macro",
         "train_accuracy": float(metrics_df.loc[metrics_df["split"] == "train", "accuracy"].iloc[0]),
         "train_f1_macro": float(metrics_df.loc[metrics_df["split"] == "train", "f1_macro"].iloc[0]),
         "test_oof_accuracy": float(metrics_df.loc[metrics_df["split"] == "testing_tscv_oof", "accuracy"].iloc[0]),
@@ -485,11 +1054,19 @@ def run_sector_model(sector_name: str, sector_df: pd.DataFrame, out_dir: Path) -
 
 
 def main():
-    panel = build_panel_for_all()
+    panel_all = build_panel_for_all()
+    selected_tickers, alloc_df = select_smoke_tickers(
+        panel_all,
+        n_tickers=SMOKE_TEST_N_TICKERS,
+        random_state=SMOKE_SELECTION_SEED,
+    )
+    panel = panel_all[panel_all["ticker"].isin(selected_tickers)].copy()
     n_tickers = panel["ticker"].nunique()
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-    out_dir = OUT_BASE / f"sector_models_{n_tickers}_{ts}"
+    out_dir = OUT_BASE / f"smoke_test_{n_tickers}_sector_models_{ts}"
     out_dir.mkdir(parents=True, exist_ok=True)
+    pd.Series(sorted(selected_tickers), name="ticker").to_csv(out_dir / "used_tickers.txt", index=False, header=False)
+    alloc_df.to_csv(out_dir / "sector_ticker_allocation.csv", index=False)
 
     summaries = []
     all_metrics = []
@@ -510,8 +1087,13 @@ def main():
                 all_folds.append(fdf.assign(sector=sector))
             all_val_preds.append(vdf.assign(model_sector=sector))
             print(
-                "   OK | val_acc={:.4f} val_f1={:.4f} best_C={:.5f} thr={:.4%}".format(
-                    summary["val_accuracy"], summary["val_f1_macro"], summary["best_C"], summary["threshold"]
+                "   OK | val_acc={:.4f} val_f1={:.4f} best_C={:.5f} penalty={} cw={} thr={:.4%}".format(
+                    summary["val_accuracy"],
+                    summary["val_f1_macro"],
+                    summary["best_C"],
+                    summary["best_penalty"],
+                    summary["best_class_weight"],
+                    summary["threshold"],
                 )
             )
         except Exception as e:
@@ -532,6 +1114,13 @@ def main():
     lines = [
         "Sector-wise multinomial logit (LASSO)",
         f"Run directory: {out_dir}",
+        f"Panel source mode: {'ticker-level + cache' if USE_TICKER_LEVEL_STORAGE else 'single consolidated csv'}",
+        f"Panel cache path: {PANEL_CACHE_PATH}",
+        f"Smoke test target tickers: {SMOKE_TEST_N_TICKERS}",
+        f"Smoke ticker random seed: {SMOKE_SELECTION_SEED}",
+        f"TimeSeriesSplit max_train_dates: {TS_MAX_TRAIN_DATES}",
+        f"Tau percentile scan: {int(TAU_PERCENTILE_SCAN.min())}-{int(TAU_PERCENTILE_SCAN.max())}",
+        f"Tau kappa grid: {', '.join(f'{x:.2f}' for x in VOL_TAU_KAPPA_GRID)}",
         f"Tickers used: {n_tickers}",
         f"Sectors attempted: {len(sectors)}",
         f"Sectors succeeded: {len(summary_df)}",

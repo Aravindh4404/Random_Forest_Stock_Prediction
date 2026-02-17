@@ -1,0 +1,4 @@
+ConstructionDataset/all_companies_features.csv
+ConstructionDataset/cache/
+MultinomialLogit/__pycache__/
+__pycache__/
