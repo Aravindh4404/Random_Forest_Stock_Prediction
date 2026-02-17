@@ -1,0 +1,17 @@
+step,dropped_feature,vif_at_drop,reason
+1,UNEMP_UNRATE,,near_zero_variance
+2,UNEMP_UNRATE_PC1,,near_zero_variance
+3,UNEMP_UNRATE_PCH,,near_zero_variance
+4,UNEMP_UNRATENSA,,near_zero_variance
+5,UNEMP_UNRATENSA_PC1,,near_zero_variance
+6,UNEMP_UNRATENSA_PCH,,near_zero_variance
+7,SMA_10,3804.3135513344946,vif_above_threshold
+8,SMA_20,566.1553011285489,vif_above_threshold
+9,SMA_50,199.22652575766418,vif_above_threshold
+10,ATR_10,62.38325656395407,vif_above_threshold
+11,SMA_5,42.37818031050871,vif_above_threshold
+12,ATR_20,16.89132448487248,vif_above_threshold
+13,ocf_to_assets,13.639077215014437,vif_above_threshold
+14,VIX_Lag2,11.56170450768445,vif_above_threshold
+15,VIX_Lag3,6.426855983602346,vif_above_threshold
+16,Volatility_10,5.571661450318412,vif_above_threshold

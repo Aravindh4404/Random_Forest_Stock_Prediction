@@ -1,0 +1,41 @@
+Sector-wise multinomial logit (LASSO)
+Run directory: C:\Users\jorge\OneDrive\Documentos\Data 606\Project\MultinomialLogit\runs\local\smoke_test_503_sector_models_20260216_234019
+Panel source mode: ticker-level + cache
+Panel cache path: C:\Users\jorge\OneDrive\Documentos\Data 606\Project\ConstructionDataset\cache\all_companies_features_runtime_cache.csv
+Smoke test target tickers: 503
+Smoke ticker random seed: 2026
+TimeSeriesSplit max_train_dates: 126
+Tau percentile scan: 10-45
+Tau kappa grid: 0.40, 0.50, 0.60
+Selection metric: 0*accuracy + 1*f1_macro
+Code snapshot: C:\Users\jorge\OneDrive\Documentos\Data 606\Project\MultinomialLogit\runs\local\smoke_test_503_sector_models_20260216_234019\_run_snapshot\run_sector_models_smoke50.py
+Tickers used: 503
+Sectors attempted: 11
+Sectors succeeded: 11
+Sectors failed: 0
+
+Top sectors by validation accuracy:
+                sector  n_tickers  val_accuracy  val_f1_macro
+             Utilities         31      0.423021      0.362500
+            Technology         81      0.412177      0.391113
+       Basic Materials         20      0.390909      0.364028
+Communication Services         25      0.390000      0.354687
+                Energy         22      0.382231      0.340911
+           Industrials         72      0.377841      0.348563
+            Healthcare         60      0.375758      0.346203
+    Consumer Defensive         37      0.374079      0.373425
+     Consumer Cyclical         55      0.369835      0.354125
+    Financial Services         69      0.358696      0.305547
+
+Bottom sectors by validation accuracy:
+                sector  n_tickers  val_accuracy  val_f1_macro
+            Technology         81      0.412177      0.391113
+       Basic Materials         20      0.390909      0.364028
+Communication Services         25      0.390000      0.354687
+                Energy         22      0.382231      0.340911
+           Industrials         72      0.377841      0.348563
+            Healthcare         60      0.375758      0.346203
+    Consumer Defensive         37      0.374079      0.373425
+     Consumer Cyclical         55      0.369835      0.354125
+    Financial Services         69      0.358696      0.305547
+           Real Estate         31      0.348974      0.288821
