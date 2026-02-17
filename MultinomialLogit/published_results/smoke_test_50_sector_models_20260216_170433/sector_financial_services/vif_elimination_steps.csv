@@ -1,0 +1,16 @@
+step,dropped_feature,vif_at_drop,reason
+1,UNEMP_UNRATE,,near_zero_variance
+2,UNEMP_UNRATE_PC1,,near_zero_variance
+3,UNEMP_UNRATE_PCH,,near_zero_variance
+4,UNEMP_UNRATENSA,,near_zero_variance
+5,UNEMP_UNRATENSA_PC1,,near_zero_variance
+6,UNEMP_UNRATENSA_PCH,,near_zero_variance
+7,SMA_10,7969.916077382795,vif_above_threshold
+8,SMA_20,1135.0129495716792,vif_above_threshold
+9,SMA_50,783.3249787321843,vif_above_threshold
+10,SMA_200,225.90591403787258,vif_above_threshold
+11,roa,70.97049127794203,vif_above_threshold
+12,ATR_20,37.40284963456368,vif_above_threshold
+13,debt_to_equity,30.008453172034113,vif_above_threshold
+14,ATR_10,24.347510235477138,vif_above_threshold
+15,VIX_Lag2,13.601517231519711,vif_above_threshold

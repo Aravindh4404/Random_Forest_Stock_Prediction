@@ -1,0 +1,34 @@
+Sector-wise multinomial logit (LASSO)
+Run directory: C:\Users\jorge\OneDrive\Documentos\Data 606\Project\MultinomialLogit\smoke_test_50_sector_models_20260216_170433
+Smoke test target tickers: 50
+Smoke ticker random seed: 2026
+Tickers used: 50
+Sectors attempted: 11
+Sectors succeeded: 11
+Sectors failed: 0
+
+Top sectors by validation accuracy:
+                sector  n_tickers  val_accuracy  val_f1_macro
+Communication Services          4      0.465909      0.437039
+     Consumer Cyclical          5      0.427273      0.424942
+           Industrials          5      0.422727      0.423117
+            Healthcare          5      0.400000      0.400997
+            Technology          6      0.386364      0.360162
+    Consumer Defensive          4      0.380682      0.377637
+                Energy          4      0.363636      0.326807
+             Utilities          4      0.335227      0.309761
+       Basic Materials          4      0.329545      0.284373
+    Financial Services          5      0.327273      0.325971
+
+Bottom sectors by validation accuracy:
+            sector  n_tickers  val_accuracy  val_f1_macro
+ Consumer Cyclical          5      0.427273      0.424942
+       Industrials          5      0.422727      0.423117
+        Healthcare          5      0.400000      0.400997
+        Technology          6      0.386364      0.360162
+Consumer Defensive          4      0.380682      0.377637
+            Energy          4      0.363636      0.326807
+         Utilities          4      0.335227      0.309761
+   Basic Materials          4      0.329545      0.284373
+Financial Services          5      0.327273      0.325971
+       Real Estate          4      0.318182      0.303449

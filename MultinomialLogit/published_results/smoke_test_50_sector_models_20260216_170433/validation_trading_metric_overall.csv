@@ -1,0 +1,2 @@
+run_folder,n_obs,sum_actual_return_times_pred_dir,mean_actual_return_times_pred_dir,positive_days_share,negative_days_share
+smoke_test_50_sector_models_20260216_170433,2200,0.9926595504328452,0.00045120888656038417,0.3018181818181818,0.2727272727272727
